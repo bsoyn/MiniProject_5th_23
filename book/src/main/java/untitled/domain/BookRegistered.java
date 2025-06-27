@@ -5,6 +5,7 @@ import java.util.*;
 import lombok.*;
 import untitled.domain.*;
 import untitled.infra.AbstractEvent;
+import java.io.File;
 
 //<<< DDD / Domain Event
 @Data
@@ -17,7 +18,7 @@ public class BookRegistered extends AbstractEvent {
     private File contents;
     private String summary;
     private String imageUrl;
-    private Tags category;
+    private String category;
     private Integer price;
 
     public BookRegistered(Book aggregate) {

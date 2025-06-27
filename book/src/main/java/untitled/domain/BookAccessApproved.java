@@ -5,6 +5,7 @@ import java.util.*;
 import lombok.*;
 import untitled.domain.*;
 import untitled.infra.AbstractEvent;
+import java.io.File;
 
 //<<< DDD / Domain Event
 @Data

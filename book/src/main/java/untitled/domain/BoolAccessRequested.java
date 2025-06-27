@@ -2,6 +2,7 @@ package untitled.domain;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.io.File;
 import lombok.*;
 import untitled.domain.*;
 import untitled.infra.AbstractEvent;
@@ -17,7 +18,7 @@ public class BoolAccessRequested extends AbstractEvent {
     private File contents;
     private String summary;
     private File image;
-    private Tags category;
+    private String category;
     private Float price;
     private Long readerId;
 

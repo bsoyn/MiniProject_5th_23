@@ -8,4 +8,5 @@ import lombok.Data;
 public class RequestbookAuthorityCommand {
 
     private Long readerId;
+    private Long bookId;
 }
