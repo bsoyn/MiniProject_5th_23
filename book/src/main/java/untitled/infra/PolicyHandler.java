@@ -94,5 +94,23 @@ public class PolicyHandler {
         // Sample Logic //
         Book.bookAccessDeniedAlert(event);
     }
+
+    @StreamListener(
+        value = KafkaProcessor.INPUT,
+        condition = "headers['type']=='WritingCompleted'"
+    )
+    public void wheneverWritingCompleted_RequestBookRegistrationAlert(
+        @Payload WritingCompleted writingCompleted
+    ) {
+        WritingCompleted event = writingCompleted;
+        System.out.println(
+            "\n\n##### listener RequestBookRegistrationAlert : " +
+            writingCompleted +
+            "\n\n"
+        );
+
+        // Sample Logic //
+        Book.requestBookRegistrationAlert(event);
+    }
 }
 //>>> Clean Arch / Inbound Adaptor

@@ -197,6 +197,43 @@ public class Book {
 
     }
     //>>> Clean Arch / Port Method
+    //<<< Clean Arch / Port Method
+    public static void requestBookRegistrationAlert(
+        WritingCompleted writingCompleted
+    ) {
+        //implement business logic here:
 
+        /** Example 1:  new item **/
+        Book book = new Book();
+        book.authorId = writingCompleted.getAuthorId();
+        book.category = writingCompleted.getCategory();
+        book.contents = writingCompleted.getContents();
+        book.imageUrl = writingCompleted.getImageUrl();
+        book.price = writingCompleted.getPrice();
+        book.summary = writingCompleted.getSummary();
+        book.title = writingCompleted.getTitle();
+
+        repository().save(book);
+
+        BookRegistered bookRegistered = new BookRegistered(book);
+        bookRegistered.publishAfterCommit();
+        
+
+        /** Example 2:  finding and process
+        
+
+        repository().findById(writingCompleted.get???()).ifPresent(book->{
+            
+            book // do something
+            repository().save(book);
+
+            BookRegistered bookRegistered = new BookRegistered(book);
+            bookRegistered.publishAfterCommit();
+
+         });
+        */
+
+    }
+    //>>> Clean Arch / Port Method
 }
 //>>> DDD / Aggregate Root
