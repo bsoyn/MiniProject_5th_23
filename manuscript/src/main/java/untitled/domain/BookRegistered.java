@@ -15,6 +15,6 @@ public class BookRegistered extends AbstractEvent {
     private Object contents;
     private String summary;
     private String imageUrl;
-    private Object category;
+    private String category;
     private Integer price;
 }

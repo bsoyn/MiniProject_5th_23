@@ -11,6 +11,8 @@ import lombok.Data;
 import untitled.ManuscriptApplication;
 import untitled.domain.WritingCompleted;
 
+import java.io.File;
+
 @Entity
 @Table(name = "Manuscript_table")
 @Data
@@ -25,14 +27,14 @@ public class Manuscript {
 
     private String title;
 
-    private String content;
-
     @Embedded
-    private File image;
+    private File content;
+
+    private String imageUrl;
 
     private String summary;
 
-    private Tags category;
+    private String category;
 
     private Integer price;
 
