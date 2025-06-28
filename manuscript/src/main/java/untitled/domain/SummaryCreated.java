@@ -13,5 +13,5 @@ public class SummaryCreated extends AbstractEvent {
     private Long bookId;
     private String summary;
     private String category;
-    private Float price;
+    private Integer price;
 }
