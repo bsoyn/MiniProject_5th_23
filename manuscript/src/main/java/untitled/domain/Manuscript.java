@@ -27,8 +27,7 @@ public class Manuscript {
 
     private String title;
 
-    @Embedded
-    private File content;
+    private String contentPath;
 
     private String imageUrl;
 
@@ -53,7 +52,9 @@ public class Manuscript {
     public void requestPublication(
         RequestPublicationCommand requestPublicationCommand
     ) {
-        //implement business logic here:
+            this.authorId = requestPublicationCommand.getAuthorId();
+            this.title = requestPublicationCommand.getTitle();
+            this.contentPath = requestPublicationCommand.getContent().getPath();
 
         PublicationRequested publicationRequested = new PublicationRequested(
             this
