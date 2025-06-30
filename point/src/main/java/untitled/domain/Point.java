@@ -46,14 +46,17 @@ public class Point {
     }
 
     public static void givepoint(ReaderJoined readerJoined) {
-
         Point point = new Point();
         point.setReaderId(readerJoined.getId());
-        point.setPoint(5000);
+
+        int basePoint = (readerJoined.getIsKT() == 1) ? 5000 : 1000;
+        point.setPoint(basePoint);
+
         repository().save(point);
 
     }
 
+    // 수정 완료
     public static void readRemainingPoint(PurchaseBookRequested purchaseBookRequested) {
         //implement business logic here:
 
@@ -61,9 +64,10 @@ public class Point {
         .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
         
         // 포인트로 도서 결제 요청 이벤트 발행
-        PointPaymentRequested pointPaymentRequested = new PointPaymentRequested(point);
-        pointPaymentRequested.setReaderId(point.getReaderId());
-        pointPaymentRequested.setPoint(purchaseBookRequested.getPoint()); 
+        PointPaymentRequested pointPaymentRequested = new PointPaymentRequested();
+        pointPaymentRequested.setReaderId(purchaseBookRequested.getReaderId());
+        pointPaymentRequested.setPoint(purchaseBookRequested.getPoint());
+        pointPaymentRequested.setBookId(purchaseBookRequested.getBookId());
         pointPaymentRequested.publish();
     }
 
@@ -117,7 +121,7 @@ public class Point {
         // this.impUid = command.getImpUid();
 
         // event driven
-        PointPaymentRequested pointPaymentRequested = new PointPaymentRequested(
+        PointChargeRequested pointPaymentRequested = new PointPaymentRequested(
             this.id, this.readerId, command.getPoint(), command.getImpUid(), command.getCost()
         );
 
