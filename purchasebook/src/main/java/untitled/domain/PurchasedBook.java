@@ -9,7 +9,7 @@ import java.util.Map;
 import javax.persistence.*;
 import lombok.Data;
 import untitled.PurchasebookApplication;
-import untitled.domain.NotParchaseBookConfirmed;
+import untitled.domain.NotPurchaseBookConfirmed;
 import untitled.domain.PurchaseBookConfirmed;
 import untitled.domain.PurchasedCompleted;
 
@@ -22,34 +22,24 @@ public class PurchasedBook {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
+    
     private Long readerId;
-
     private Long bookId;
+    private String status; // "REQUESTED", "COMPLETED", "FAILED"
 
     @PostPersist
     public void onPostPersist() {
-        PurchaseBookConfirmed purchaseBookConfirmed = new PurchaseBookConfirmed(
-            this
-        );
-        purchaseBookConfirmed.publishAfterCommit();
+        // '도서구매 요청됨' 이벤트 발행
+        PurchaseBookRequested requested = new PurchaseBookRequested(this);
+        requested.publishAfterCommit(); 
+    }
 
-        //Following code causes dependency to external APIs
-        // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
+    public void markCompleted() {
+        this.status = "COMPLETED";
+    }
 
-        untitled.external.PurchasebookCommand purchasebookCommand = new untitled.external.PurchasebookCommand();
-        // mappings goes here
-        PurchasebookApplication.applicationContext
-            .getBean(untitled.external.PurchasedBookService.class)
-            .purchasebook(/* get???(), */purchasebookCommand);
-
-        NotParchaseBookConfirmed notParchaseBookConfirmed = new NotParchaseBookConfirmed(
-            this
-        );
-        notParchaseBookConfirmed.publishAfterCommit();
-
-        PurchasedCompleted purchasedCompleted = new PurchasedCompleted(this);
-        purchasedCompleted.publishAfterCommit();
+    public void markFailed() {
+        this.status = "FAILED";
     }
 
     public static PurchasedBookRepository repository() {
@@ -62,68 +52,7 @@ public class PurchasedBook {
     //<<< Clean Arch / Port Method
     public void purchasebook(PurchasebookCommand purchasebookCommand) {
         //implement business logic here:
-
-        PurchaseBookRequested purchaseBookRequested = new PurchaseBookRequested(
-            this
-        );
-        purchaseBookRequested.publishAfterCommit();
+        this.readerId = purchasebookCommand.getReaderId();
+        this.bookId = purchasebookCommand.getBookId();
+        this.status = "REQUESTED";
     }
-
-    //>>> Clean Arch / Port Method
-
-    //<<< Clean Arch / Port Method
-    public static void purchaseFinishAlert(BuyApproved buyApproved) {
-        //implement business logic here:
-
-        /** Example 1:  new item 
-        PurchasedBook purchasedBook = new PurchasedBook();
-        repository().save(purchasedBook);
-
-        PurchasedCompleted purchasedCompleted = new PurchasedCompleted(purchasedBook);
-        purchasedCompleted.publishAfterCommit();
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(buyApproved.get???()).ifPresent(purchasedBook->{
-            
-            purchasedBook // do something
-            repository().save(purchasedBook);
-
-            PurchasedCompleted purchasedCompleted = new PurchasedCompleted(purchasedBook);
-            purchasedCompleted.publishAfterCommit();
-
-         });
-        */
-
-    }
-
-    //>>> Clean Arch / Port Method
-    //<<< Clean Arch / Port Method
-    public static void purchaseFailAlert(BuyRejected buyRejected) {
-        //implement business logic here:
-
-        /** Example 1:  new item 
-        PurchasedBook purchasedBook = new PurchasedBook();
-        repository().save(purchasedBook);
-
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(buyRejected.get???()).ifPresent(purchasedBook->{
-            
-            purchasedBook // do something
-            repository().save(purchasedBook);
-
-
-         });
-        */
-
-    }
-    //>>> Clean Arch / Port Method
-
-}
-//>>> DDD / Aggregate Root

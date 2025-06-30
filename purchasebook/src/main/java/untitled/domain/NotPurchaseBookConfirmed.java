@@ -9,17 +9,19 @@ import untitled.infra.AbstractEvent;
 //<<< DDD / Domain Event
 @Data
 @ToString
-public class NotParchaseBookConfirmed extends AbstractEvent {
+public class NotPurchaseBookConfirmed extends AbstractEvent {
 
     private Long id;
     private Long readerId;
     private Long bookId;
 
-    public NotParchaseBookConfirmed(PurchasedBook aggregate) {
-        super(aggregate);
+    public NotPurchaseBookConfirmed(Long readerId, Long bookId) {
+        super();
+        this.readerId = readerId;
+        this.bookId = bookId;
     }
 
-    public NotParchaseBookConfirmed() {
+    public NotPurchaseBookConfirmed() {
         super();
     }
 }

@@ -15,8 +15,12 @@ public class PurchasedCompleted extends AbstractEvent {
     private Long readerId;
     private Long bookId;
 
-    public PurchasedCompleted(PurchasedBook aggregate) {
-        super(aggregate);
+    public PurchasedCompleted(PurchasedBook book) {
+        super (book);
+
+        this.id = book.getId();
+        this.readerId = book.getReaderId();
+        this.bookId = book.getBookId();
     }
 
     public PurchasedCompleted() {

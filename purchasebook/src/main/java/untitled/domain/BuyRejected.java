@@ -11,5 +11,6 @@ public class BuyRejected extends AbstractEvent {
 
     private Long id;
     private Long readerId;
+    private Long bookId;
     private Integer point;
 }
