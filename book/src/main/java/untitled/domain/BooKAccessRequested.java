@@ -12,6 +12,7 @@ import untitled.infra.AbstractEvent;
 @ToString
 public class BooKAccessRequested extends AbstractEvent {
 
+    private Long id;
     private Long bookId;
     private Long readerId;
 

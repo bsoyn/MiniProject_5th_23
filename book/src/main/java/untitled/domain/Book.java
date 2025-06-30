@@ -67,6 +67,10 @@ public class Book {
         RequestbookAuthorityCommand requestbookAuthorityCommand
     ) {
         //implement business logic here:
+        BooKAccessRequested bookAccessRequested = new BooKAccessRequested();
+        bookAccessRequested.setBookId(requestbookAuthorityCommand.getBookId());
+        bookAccessRequested.setReaderId(requestbookAuthorityCommand.getReaderId());
+        bookAccessRequested.publishAfterCommit();
     }
 
     //>>> Clean Arch / Port Method
@@ -75,29 +79,13 @@ public class Book {
     public static void bookAccessApproveAlert(
         SubscriptionValidChecked subscriptionValidChecked
     ) {
-        //implement business logic here:
-
-        /** Example 1:  new item 
-        Book book = new Book();
-        repository().save(book);
-
-        BookAccessApproved bookAccessApproved = new BookAccessApproved(book);
-        bookAccessApproved.publishAfterCommit();
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(subscriptionValidChecked.get???()).ifPresent(book->{
-            
-            book // do something
-            repository().save(book);
-
+        repository().findById(subscriptionValidChecked.getBookId()).ifPresent(book->{
+            // do something
             BookAccessApproved bookAccessApproved = new BookAccessApproved(book);
-            bookAccessApproved.publishAfterCommit();
+            bookAccessApproved.setReaderId(subscriptionValidChecked.getReaderId());
 
+            bookAccessApproved.publishAfterCommit();
          });
-        */
 
     }
 
@@ -106,29 +94,15 @@ public class Book {
     public static void bookAccessApproveAlert(
         PurchaseBookConfirmed purchaseBookConfirmed
     ) {
-        //implement business logic here:
-
-        /** Example 1:  new item 
-        Book book = new Book();
-        repository().save(book);
-
-        BookAccessApproved bookAccessApproved = new BookAccessApproved(book);
-        bookAccessApproved.publishAfterCommit();
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(purchaseBookConfirmed.get???()).ifPresent(book->{
-            
-            book // do something
-            repository().save(book);
+        repository().findById(purchaseBookConfirmed.getBookId()).ifPresent(book->{
 
             BookAccessApproved bookAccessApproved = new BookAccessApproved(book);
-            bookAccessApproved.publishAfterCommit();
+            
+            bookAccessApproved.setIsPurchased(true);
+            bookAccessApproved.setReaderId(purchaseBookConfirmed.getReaderId());
 
+            bookAccessApproved.publishAfterCommit();
          });
-        */
 
     }
 

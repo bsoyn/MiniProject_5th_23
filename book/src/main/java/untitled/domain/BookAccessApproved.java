@@ -25,6 +25,14 @@ public class BookAccessApproved extends AbstractEvent {
 
     public BookAccessApproved(Book aggregate) {
         super(aggregate);
+        this.title = aggregate.getTitle();
+        this.authorId = aggregate.getAuthorId();
+        this.contents = aggregate.getContents();
+        this.summary = aggregate.getSummary();
+        this.imageUrl = aggregate.getImageUrl();
+        this.category = aggregate.getCategory();
+        this.price = aggregate.getPrice();
+        this.views = aggregate.getViews();
     }
 
     public BookAccessApproved() {
