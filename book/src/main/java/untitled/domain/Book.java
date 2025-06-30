@@ -173,8 +173,7 @@ public class Book {
         WritingCompleted writingCompleted
     ) {
         //implement business logic here:
-
-        /** Example 1:  new item **/
+        
         Book book = new Book();
         book.authorId = writingCompleted.getAuthorId();
         book.category = writingCompleted.getCategory();
@@ -187,22 +186,9 @@ public class Book {
         repository().save(book);
 
         BookRegistered bookRegistered = new BookRegistered(book);
+        bookRegistered.setManuscriptId(writingCompleted.getManuscriptId());
+
         bookRegistered.publishAfterCommit();
-        
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(writingCompleted.get???()).ifPresent(book->{
-            
-            book // do something
-            repository().save(book);
-
-            BookRegistered bookRegistered = new BookRegistered(book);
-            bookRegistered.publishAfterCommit();
-
-         });
-        */
 
     }
     //>>> Clean Arch / Port Method
