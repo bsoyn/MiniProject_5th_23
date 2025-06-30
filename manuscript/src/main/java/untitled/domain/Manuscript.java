@@ -86,32 +86,34 @@ public class Manuscript {
             manuscript.setImageUrl(coverCreated.getImageUrl());
             repository().save(manuscript);
 
-            WritingCompleted writingCompleted = new WritingCompleted(manuscript);
+            WritingCompleted writingCompleted = new WritingCompleted();
+            writingCompleted.setManuscriptId(manuscript.getId()); 
+            writingCompleted.setAuthorId(manuscript.getAuthorId());
+            writingCompleted.setTitle(manuscript.getTitle());
+            writingCompleted.setContent(manuscript.getContent());
+            writingCompleted.setImageUrl(manuscript.getImageUrl());
+            writingCompleted.setSummary(manuscript.getSummary());
+            writingCompleted.setCategory(manuscript.getCategory());
+            writingCompleted.setPrice(manuscript.getPrice());
+
             writingCompleted.publishAfterCommit();
         });
 
     }
 
     public static void alertBookRegistration(BookRegistered bookRegistered) {
-        //implement business logic here:
 
-        /** Example 1:  new item 
-        Manuscript manuscript = new Manuscript();
-        repository().save(manuscript);
-
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(bookRegistered.get???()).ifPresent(manuscript->{
+        repository().findById(bookRegistered.getManuscriptId()).ifPresent(manuscript->{
             
-            manuscript // do something
+            System.out.println(
+            "\n\n##### Manuscript : " +
+            bookRegistered +
+            "\n\n"
+             );
             repository().save(manuscript);
 
-
          });
-        */
+    
 
     }
     //>>> Clean Arch / Port Method

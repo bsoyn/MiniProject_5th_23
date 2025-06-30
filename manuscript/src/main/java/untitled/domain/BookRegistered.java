@@ -8,8 +8,8 @@ import untitled.infra.AbstractEvent;
 @Data
 @ToString
 public class BookRegistered extends AbstractEvent {
-
     private Long id;
+    private Long manuscriptId; 
     private String title;
     private Long authorId;
     private Object contents;

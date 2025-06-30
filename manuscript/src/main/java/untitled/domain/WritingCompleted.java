@@ -13,9 +13,10 @@ import java.io.*;
 public class WritingCompleted extends AbstractEvent {
 
     private Long id;
+    private Long manuscriptId; 
     private Long authorId;
     private String title;
-    private File content;
+    private String content;
     private String imageUrl;
     private String summary;
     private String category;

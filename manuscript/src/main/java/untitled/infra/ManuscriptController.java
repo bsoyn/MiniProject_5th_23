@@ -38,7 +38,7 @@ public class ManuscriptController {
         @RequestBody RequestPublicationCommand requestPublicationCommand
     ) throws Exception {
         System.out.println(
-            "##### /manuscript/requestPublication  called #####"
+            "##### /manuscript/request-publication  called #####"
         );
 
         Manuscript manuscript = new Manuscript();
