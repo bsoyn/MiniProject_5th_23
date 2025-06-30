@@ -83,8 +83,8 @@ public class Point {
         PointPaymentRequested pointPaymentRequested = new PointPaymentRequested(point);
         pointPaymentRequested.setReaderId(point.getReaderId());
         pointPaymentRequested.setPoint(purchaseBookRequested.getPoint()); 
-        pointPaymentRequested.publishAfterCommit();
-}
+        pointPaymentRequested.publish();
+    }
 
     }
 
