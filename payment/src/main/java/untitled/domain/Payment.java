@@ -37,6 +37,7 @@ public class Payment {
         return paymentRepository;
     }
 
+    // 여기서 결제 성공하면, 완료 해서 보내고, 실패하면, 실패로 보내고..
     //<<< Clean Arch / Port Method
     public static void pointpayment(
         PointPaymentRequested pointPaymentRequested

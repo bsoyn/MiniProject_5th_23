@@ -14,4 +14,5 @@ public class PaymentFinished extends AbstractEvent {
     private Integer point;
     private Integer cost;
     private Boolean isCompleted;
+    private String impUid;
 }

@@ -28,6 +28,8 @@ public class Point {
 
     private Integer point;
 
+    private String impUid;
+
     @PreUpdate
     public void onPreUpdate() {
         PointPaymentRequested pointPaymentRequested = new PointPaymentRequested(
@@ -46,7 +48,7 @@ public class Point {
     public static void givepoint(ReaderJoined readerJoined) {
 
         Point point = new Point();
-        point.setReaderId(readerJoined.getId())
+        point.setReaderId(readerJoined.getId());
         point.setPoint(5000);
         repository().save(point);
 
@@ -76,12 +78,14 @@ public class Point {
             BuyApproved approved = new BuyApproved(point);
             approved.setReaderId(point.getReaderId());
             approved.setPoint(remainingPointChecked.getPoint());
+            approved.setBookId(remainingPointChecked.getBookId());
             approved.publish();
 
         } else {
             BuyRejected rejected = new BuyRejected(point);
             rejected.setReaderId(point.getReaderId());
             rejected.setPoint(remainingPointChecked.getPoint());
+            rejected.setBookId(remainingPointChecked.getBookId());
             rejected.setReason("잔액 부족");
             rejected.publish();
         }
@@ -94,7 +98,7 @@ public class Point {
         // 수정해야하는 프론트 코드
         String frontUrl = "http://frontend-service/api/notification/failure"; 
         Map<String, Object> body = new HashMap<>();
-        body.put("readerId", event.getReaderId());
+        body.put("readerId", buyRejected.getReaderId());
         body.put("message", "도서 구매가 포인트 부족으로 실패했습니다.");
         body.put("reason", "NOT_ENOUGH_POINT");
 
@@ -107,50 +111,23 @@ public class Point {
 
     }
 
-    public static void buyPoint(Point command) {
-        this.readerId = command.getReaderId();
-        this.point = command.getPoint();
+    public void buyPoint(PointChargeRequested command) {
+        // this.readerId = command.getReaderId();
+        // this.point = command.getPoint();
+        // this.impUid = command.getImpUid();
 
         // event driven
-        PointPaymentRequested pointPaymentRequested = new PointPaymentRequested(this);
+        PointPaymentRequested pointPaymentRequested = new PointPaymentRequested(
+            this.id, this.readerId, command.getPoint(), command.getImpUid(), command.getCost()
+        );
+
         pointPaymentRequested.publish();
     }
 
-        // 포인트 충전
+
+    // 포인트 충전
     public static void chargePoint(PaymentFinished paymentFinished) {
 
-        PaymentRequested paymentRequested = new PaymentRequested();
-
-        paymentRequested.setReaderId(paymentFinished.getReaderId());
-        paymentRequested.setPoint(paymentFinished.getPoint());
-        paymentRequested.setCost(paymentFinished.getPoint()); // 또는 금액 필드 따로 있다면 그걸로
-
-        // 결제 시스템에 이벤트 발행
-        paymentRequested.publishAfterCommit();
-
-        //implement business logic here:
-
-        /** Example 1:  new item 
-        Point point = new Point();
-        repository().save(point);
-
-        */
-
-        /** Example 2:  finding and process
-        
-        // if paymentFinished.externalPaymentModuleId exists, use it
-        
-        // ObjectMapper mapper = new ObjectMapper();
-        // Map<, Object> paymentMap = mapper.convertValue(paymentFinished.getExternalPaymentModuleId(), Map.class);
-
-        repository().findById(paymentFinished.get???()).ifPresent(point->{
-            
-            point // do something
-            repository().save(point);
-
-
-         });
-        */
 
     }
 

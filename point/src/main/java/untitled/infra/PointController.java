@@ -23,7 +23,8 @@ public class PointController {
     @PatchMapping("/{id}")
     public ResponseEntity<?> buyPoint(
         @PathVariable Long id,
-        @RequestBody Point command
+        @RequestBody PointChargeRequested command
+        
     ) {
         Point point = pointRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Point 계정 없음"));

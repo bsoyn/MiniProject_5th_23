@@ -14,6 +14,7 @@ public class BuyRejected extends AbstractEvent {
     private Long id;
     private Long readerId;
     private Integer point;
+    private Long bookId;
 
     public BuyRejected(Point aggregate) {
         super(aggregate);

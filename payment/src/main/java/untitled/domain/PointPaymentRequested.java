@@ -12,4 +12,6 @@ public class PointPaymentRequested extends AbstractEvent {
     private Long id;
     private Long readerId;
     private Integer point;
+    private String impUid;
+    private Integer cost; // 결제 금액
 }
