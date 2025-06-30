@@ -1,9 +1,6 @@
-package untitled.domain;
+package untitled.domain.BookAccess;
 
-import java.time.LocalDate;
-import java.util.*;
 import lombok.*;
-import untitled.domain.*;
 import untitled.infra.AbstractEvent;
 
 //<<< DDD / Domain Event
@@ -23,16 +20,8 @@ public class BookAccessApproved extends AbstractEvent {
     private Boolean isPurchased;
     private Long readerId;
 
-    public BookAccessApproved(Book aggregate) {
+    public BookAccessApproved(BookAccess aggregate) {
         super(aggregate);
-        this.title = aggregate.getTitle();
-        this.authorId = aggregate.getAuthorId();
-        this.contents = aggregate.getContents();
-        this.summary = aggregate.getSummary();
-        this.imageUrl = aggregate.getImageUrl();
-        this.category = aggregate.getCategory();
-        this.price = aggregate.getPrice();
-        this.views = aggregate.getViews();
     }
 
     public BookAccessApproved() {

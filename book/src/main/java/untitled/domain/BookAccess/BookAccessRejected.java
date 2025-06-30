@@ -1,9 +1,6 @@
-package untitled.domain;
+package untitled.domain.BookAccess;
 
-import java.time.LocalDate;
-import java.util.*;
 import lombok.*;
-import untitled.domain.*;
 import untitled.infra.AbstractEvent;
 
 //<<< DDD / Domain Event
@@ -12,10 +9,10 @@ import untitled.infra.AbstractEvent;
 public class BookAccessRejected extends AbstractEvent {
 
     private Long id;
-    private Boolean isSubscried;
-    private Boolean isPurchased;
+    private Long bookId;
+    private Long readerId;
 
-    public BookAccessRejected(Book aggregate) {
+    public BookAccessRejected(BookAccess aggregate) {
         super(aggregate);
     }
 

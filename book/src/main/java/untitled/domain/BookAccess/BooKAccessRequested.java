@@ -1,10 +1,6 @@
-package untitled.domain;
+package untitled.domain.BookAccess;
 
-import java.time.LocalDate;
-import java.util.*;
-import java.io.File;
 import lombok.*;
-import untitled.domain.*;
 import untitled.infra.AbstractEvent;
 
 //<<< DDD / Domain Event
@@ -16,7 +12,7 @@ public class BooKAccessRequested extends AbstractEvent {
     private Long bookId;
     private Long readerId;
 
-    public BooKAccessRequested(Book aggregate) {
+    public BooKAccessRequested(BookAccess aggregate) {
         super(aggregate);
     }
 
