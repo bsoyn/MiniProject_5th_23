@@ -5,7 +5,10 @@ import lombok.*;
 import untitled.domain.*;
 import untitled.infra.AbstractEvent;
 
+
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @ToString
 public class PointPaymentRequested extends AbstractEvent {
 

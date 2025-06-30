@@ -40,5 +40,40 @@ public class PolicyHandler {
         // Sample Logic //
         Payment.pointpayment(event);
     }
+
+    @StreamListener(
+        value = KafkaProcessor.INPUT,
+        condition = "headers['type']=='PaymentFinished'"
+    )
+    public void handlePaymentFinished(@Payload PaymentFinished event) {
+        System.out.println("✅ 결제 성공 수신: " + event);
+
+        PointUsageRequested usage = new PointUsageRequested();
+        usage.setReaderId(event.getReaderId());
+        usage.setPoint(event.getPoint());
+        usage.setPaymentId(event.getId());
+        usage.setIsCompleted(true);  // ✅ 성공
+
+        usage.publishAfterCommit();
+    }
+
+
+    @StreamListener(
+        value = KafkaProcessor.INPUT,
+        condition = "headers['type']=='PaymentFailed'"
+    )
+    public void handlePaymentFailed(@Payload PaymentFailed event) {
+        System.out.println("❌ 결제 실패 수신: " + event);
+
+        PointUsageRequested usage = new PointUsageRequested();
+        usage.setReaderId(event.getReaderId());
+        usage.setPoint(event.getPoint());
+        usage.setPaymentId(event.getId());
+        usage.setIsCompleted(false);  // ❌ 실패
+
+        usage.publishAfterCommit();
+    }
+
+
 }
 //>>> Clean Arch / Inbound Adaptor
