@@ -16,7 +16,9 @@ public class RemainingPointChecked extends AbstractEvent {
     private Integer point;
 
     public RemainingPointChecked(Point aggregate) {
-        super(aggregate);
+        super(aggregate);        
+        this.readerId = aggregate.getReaderId();
+        this.point = aggregate.getPoint();
     }
 
     public RemainingPointChecked() {

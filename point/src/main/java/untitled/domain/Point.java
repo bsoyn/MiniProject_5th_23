@@ -79,7 +79,7 @@ public class Point {
         Point point = repository().findByReaderId(purchaseBookRequested.getReaderId())
         .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
         
-        // 포인트 결제 요청 이벤트 발행
+        // 포인트로 도 결제 요청 이벤트 발행
         PointPaymentRequested pointPaymentRequested = new PointPaymentRequested(point);
         pointPaymentRequested.setReaderId(point.getReaderId());
         pointPaymentRequested.setPoint(purchaseBookRequested.getPoint()); 
@@ -120,6 +120,16 @@ public class Point {
     //>>> Clean Arch / Port Method
     //<<< Clean Arch / Port Method
     public static void chargePoint(PaymentFinished paymentFinished) {
+
+        PaymentRequested paymentRequested = new PaymentRequested();
+
+        paymentRequested.setReaderId(paymentFinished.getReaderId());
+        paymentRequested.setPoint(paymentFinished.getPoint());
+        paymentRequested.setCost(paymentFinished.getPoint()); // 또는 금액 필드 따로 있다면 그걸로
+
+        // 결제 시스템에 이벤트 발행
+        paymentRequested.publishAfterCommit();
+
         //implement business logic here:
 
         /** Example 1:  new item 

@@ -46,17 +46,16 @@ public class PolicyHandler {
     public void wheneverPurchaseBookRequested_ReadRemainingPoint(
         @Payload PurchaseBookRequested purchaseBookRequested
     ) {
-        PurchaseBookRequested event = purchaseBookRequested;
         System.out.println(
             "\n\n##### listener ReadRemainingPoint : " +
             purchaseBookRequested +
             "\n\n"
         );
 
-        Point point = Point.repository().findByReaderId(event.getReaderId())
+        Point point = Point.repository().findByReaderId(purchaseBookRequested.getReaderId())
         .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
 
-        
+
 
         // Sample Logic //
         Point.readRemainingPoint(event);
