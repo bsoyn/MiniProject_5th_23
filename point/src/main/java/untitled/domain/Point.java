@@ -47,11 +47,13 @@ public class Point {
     public static void givepoint(ReaderJoined readerJoined) {
         //implement business logic here:
 
-        /** Example 1:  new item 
+        //** Example 1:  new item 
         Point point = new Point();
+        point.setReaderId(readerJoined.getId())
+        point.setPoint(5000);
         repository().save(point);
 
-        */
+        //*/
 
         /** Example 2:  finding and process
         

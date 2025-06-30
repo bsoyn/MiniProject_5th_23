@@ -7,4 +7,6 @@ import untitled.domain.*;
 //<<< PoEAA / Repository
 @RepositoryRestResource(collectionResourceRel = "points", path = "points")
 public interface PointRepository
-    extends PagingAndSortingRepository<Point, Long> {}
+    extends PagingAndSortingRepository<Point, Long> {
+        Optional<Point> findByReaderId(Long readerId);
+    }
