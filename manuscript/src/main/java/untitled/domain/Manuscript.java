@@ -13,8 +13,8 @@ import untitled.domain.WritingCompleted;
 
 import java.io.File;
 import org.springframework.beans.BeanUtils;
+import untitled.domain.ManuscriptStatus;
 
-import org.springframework.beans.BeanUtils;
 
 @Entity
 @Table(name = "Manuscript_table")
@@ -43,6 +43,9 @@ public class Manuscript {
 
     private Integer price;
 
+    @Enumerated(EnumType.STRING)
+    private ManuscriptStatus status;
+
     public static ManuscriptRepository repository() {
         ManuscriptRepository manuscriptRepository = ManuscriptApplication.applicationContext.getBean(
             ManuscriptRepository.class
@@ -58,6 +61,7 @@ public class Manuscript {
             this.authorId = requestPublicationCommand.getAuthorId();
             this.title = requestPublicationCommand.getTitle();
             this.content = requestPublicationCommand.getContent();
+            this.status = ManuscriptStatus.SUBMITTED;
 
             repository().save(this);
 
@@ -116,7 +120,16 @@ public class Manuscript {
     
 
     }
-    //>>> Clean Arch / Port Method
+
+    public void tempSave(TempSaveManuscriptCommand cmd) {
+        this.authorId = cmd.getAuthorId();
+        this.title = cmd.getTitle();
+        this.content = cmd.getContent();
+        this.status = ManuscriptStatus.TEMP;
+
+        repository().save(this);
+    }
+
 
 }
 //>>> DDD / Aggregate Root
