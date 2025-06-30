@@ -1,13 +1,17 @@
 server:
-  port: 8080
+  port: 8082
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+      enabled: true
 
 spring:
   application:
     name: author
----
-
-spring:
-  profiles: default
+  security:
+    basic:
+      enabled: false
   jpa:
     properties:
       hibernate:
@@ -30,24 +34,16 @@ spring:
       bindings:
         event-in:
           group: author
-#<<< EDA / Topic Name
           destination: untitled
-#>>> EDA / Topic Name
           contentType: application/json
         event-out:
-#<<< EDA / Topic Name
           destination: untitled
-#>>> EDA / Topic Name
           contentType: application/json
 
 logging:
   level:
     org.hibernate.type: trace
     org.springframework.cloud: debug
-
-
-server:
-  port: 8082
 
 ---
 

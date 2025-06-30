@@ -11,6 +11,7 @@ import lombok.Data;
 import untitled.ManagerApplication;
 import untitled.domain.AuthorApproved;
 import untitled.domain.AuthorDenied;
+import untitled.domain.File;
 
 @Entity
 @Table(name = "ManageAuthor_table")
@@ -37,15 +38,6 @@ public class ManageAuthor {
 
     private String email;
 
-    @PostUpdate
-    public void onPostUpdate() {
-        AuthorApproved authorApproved = new AuthorApproved(this);
-        authorApproved.publishAfterCommit();
-
-        AuthorDenied authorDenied = new AuthorDenied(this);
-        authorDenied.publishAfterCommit();
-    }
-
     public static ManageAuthorRepository repository() {
         ManageAuthorRepository manageAuthorRepository = ManagerApplication.applicationContext.getBean(
             ManageAuthorRepository.class
@@ -55,26 +47,17 @@ public class ManageAuthor {
 
     //<<< Clean Arch / Port Method
     public static void registerNewAuthor(RegisterRequested registerRequested) {
-        //implement business logic here:
-
-        /** Example 1:  new item 
+        // RegisterRequested 이벤트의 값으로 신규 작가 등록
         ManageAuthor manageAuthor = new ManageAuthor();
+        manageAuthor.setAuthorId(registerRequested.getId());
+        manageAuthor.setName(registerRequested.getName());
+        manageAuthor.setEmail(registerRequested.getEmail());
+        manageAuthor.setBio(registerRequested.getBio());
+        manageAuthor.setMajorWork(registerRequested.getMajorWork());
+        manageAuthor.setPortfolio(registerRequested.getPortfolio()); // 실제 portfolio 값 사용
+        manageAuthor.setIsApproval(false); // 기본값: 미승인
+
         repository().save(manageAuthor);
-
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(registerRequested.get???()).ifPresent(manageAuthor->{
-            
-            manageAuthor // do something
-            repository().save(manageAuthor);
-
-
-         });
-        */
-
     }
     //>>> Clean Arch / Port Method
 

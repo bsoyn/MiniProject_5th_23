@@ -16,6 +16,9 @@ public class ReadAuthorInfoViewHandler {
     //<<< DDD / CQRS
     @Autowired
     private ReadAuthorInfoRepository readAuthorInfoRepository;
+    
+    @Autowired
+    private ManageAuthorRepository manageAuthorRepository;
 
     @StreamListener(KafkaProcessor.INPUT)
     public void whenAuthorApproved_then_CREATE_1(
@@ -24,20 +27,26 @@ public class ReadAuthorInfoViewHandler {
         try {
             if (!authorApproved.validate()) return;
 
-            // view 객체 생성
-            ReadAuthorInfo readAuthorInfo = new ReadAuthorInfo();
-            // view 객체에 이벤트의 Value 를 set 함
-            readAuthorInfo.setIsApproval(authorApproved.getIsApproval());
-            readAuthorInfo.setName(authorApproved.getName());
-            readAuthorInfo.setBio(authorApproved.getBio());
-            readAuthorInfo.setMajorWork(authorApproved.getMajorWork());
-            readAuthorInfo.setPortfolio(
-                String.valueOf(authorApproved.getPortfolio())
-            );
-            readAuthorInfo.setEmail(authorApproved.getEmail());
-            readAuthorInfo.setAuthorId(authorApproved.getId());
-            // view 레파지 토리에 save
-            readAuthorInfoRepository.save(readAuthorInfo);
+            // ManageAuthor에서 상세 정보 조회
+            Optional<ManageAuthor> manageAuthorOpt = manageAuthorRepository.findById(authorApproved.getId());
+            if (manageAuthorOpt.isPresent()) {
+                ManageAuthor manageAuthor = manageAuthorOpt.get();
+                
+                // view 객체 생성
+                ReadAuthorInfo readAuthorInfo = new ReadAuthorInfo();
+                // view 객체에 ManageAuthor의 데이터를 set 함
+                readAuthorInfo.setIsApproval(manageAuthor.getIsApproval());
+                readAuthorInfo.setName(manageAuthor.getName());
+                readAuthorInfo.setBio(manageAuthor.getBio());
+                readAuthorInfo.setMajorWork(manageAuthor.getMajorWork());
+                readAuthorInfo.setPortfolio(
+                    String.valueOf(manageAuthor.getPortfolio())
+                );
+                readAuthorInfo.setEmail(manageAuthor.getEmail());
+                readAuthorInfo.setAuthorId(manageAuthor.getAuthorId());
+                // view 레파지 토리에 save
+                readAuthorInfoRepository.save(readAuthorInfo);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
