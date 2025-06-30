@@ -53,7 +53,6 @@ public class PolicyHandler {
             "\n\n##### listener AlertCoverCreated : " + coverCreated + "\n\n"
         );
 
-        // Sample Logic //
         Manuscript.alertCoverCreated(event);
     }
 
@@ -74,5 +73,7 @@ public class PolicyHandler {
         // Sample Logic //
         Manuscript.alertBookRegistration(event);
     }
+
+    
 }
 //>>> Clean Arch / Inbound Adaptor

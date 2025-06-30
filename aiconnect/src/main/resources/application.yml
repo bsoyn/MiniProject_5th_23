@@ -5,7 +5,9 @@ spring:
   application:
     name: aiconnect
 ---
-
+openai:
+  api:
+    key: ${OPENAI_API_KEY}
 spring:
   profiles: default
   jpa:

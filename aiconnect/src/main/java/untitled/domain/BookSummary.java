@@ -11,6 +11,20 @@ import lombok.Data;
 import untitled.AiconnectApplication;
 import untitled.domain.SummaryCreated;
 
+import untitled.domain.SummaryCreated;
+import javax.persistence.*;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import okhttp3.*;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+
 @Entity
 @Table(name = "BookSummary_table")
 @Data
@@ -23,11 +37,15 @@ public class BookSummary {
 
     private Long bookId;
 
+    private Long manuscriptId; 
+
     private String summary;
 
     private String category;
 
     private Integer price;
+
+    private String keywords; 
 
     public static BookSummaryRepository repository() {
         BookSummaryRepository bookSummaryRepository = AiconnectApplication.applicationContext.getBean(
@@ -35,35 +53,6 @@ public class BookSummary {
         );
         return bookSummaryRepository;
     }
-
-    //<<< Clean Arch / Port Method
-    public static void summaryBook(PublicationRequested publicationRequested) {
-        //implement business logic here:
-
-        /** Example 1:  new item 
-        BookSummary bookSummary = new BookSummary();
-        repository().save(bookSummary);
-
-        SummaryCreated summaryCreated = new SummaryCreated(bookSummary);
-        summaryCreated.publishAfterCommit();
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(publicationRequested.get???()).ifPresent(bookSummary->{
-            
-            bookSummary // do something
-            repository().save(bookSummary);
-
-            SummaryCreated summaryCreated = new SummaryCreated(bookSummary);
-            summaryCreated.publishAfterCommit();
-
-         });
-        */
-
-    }
-    //>>> Clean Arch / Port Method
 
 }
 //>>> DDD / Aggregate Root
