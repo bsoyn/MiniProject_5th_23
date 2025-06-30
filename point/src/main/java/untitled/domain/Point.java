@@ -79,7 +79,7 @@ public class Point {
         Point point = repository().findByReaderId(purchaseBookRequested.getReaderId())
         .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
         
-        // 포인트로 도 결제 요청 이벤트 발행
+        // 포인트로 도서 결제 요청 이벤트 발행
         PointPaymentRequested pointPaymentRequested = new PointPaymentRequested(point);
         pointPaymentRequested.setReaderId(point.getReaderId());
         pointPaymentRequested.setPoint(purchaseBookRequested.getPoint()); 
@@ -159,33 +159,25 @@ public class Point {
     //>>> Clean Arch / Port Method
     //<<< Clean Arch / Port Method
     public static void usePoint(RemainingPointChecked remainingPointChecked) {
-        //implement business logic here:
+        Point point = repository().findByReaderId(remainingPointChecked.getReaderId())
+            .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
 
-        /** Example 1:  new item 
-        Point point = new Point();
-        repository().save(point);
-
-        BuyApproved buyApproved = new BuyApproved(point);
-        buyApproved.publishAfterCommit();
-        BuyRejected buyRejected = new BuyRejected(point);
-        buyRejected.publishAfterCommit();
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(remainingPointChecked.get???()).ifPresent(point->{
-            
-            point // do something
+        if (point.getPoint() >= remainingPointChecked.getPoint()) {
+            point.setPoint(point.getPoint() - remainingPointChecked.getPoint());
             repository().save(point);
 
-            BuyApproved buyApproved = new BuyApproved(point);
-            buyApproved.publishAfterCommit();
-            BuyRejected buyRejected = new BuyRejected(point);
-            buyRejected.publishAfterCommit();
+            BuyApproved approved = new BuyApproved(point);
+            approved.setReaderId(point.getReaderId());
+            approved.setPoint(remainingPointChecked.getPoint());
+            approved.publish();
 
-         });
-        */
+        } else {
+            BuyRejected rejected = new BuyRejected(point);
+            rejected.setReaderId(point.getReaderId());
+            rejected.setPoint(remainingPointChecked.getPoint());
+            rejected.setReason("잔액 부족");
+            rejected.publish();
+        }
 
     }
 
