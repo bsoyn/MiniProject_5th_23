@@ -43,37 +43,16 @@ public class Point {
         return pointRepository;
     }
 
-    //<<< Clean Arch / Port Method
     public static void givepoint(ReaderJoined readerJoined) {
-        //implement business logic here:
 
-        //** Example 1:  new item 
         Point point = new Point();
         point.setReaderId(readerJoined.getId())
         point.setPoint(5000);
         repository().save(point);
 
-        //*/
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(readerJoined.get???()).ifPresent(point->{
-            
-            point // do something
-            repository().save(point);
-
-
-         });
-        */
-
     }
 
-    //>>> Clean Arch / Port Method
-    //<<< Clean Arch / Port Method
-    public static void readRemainingPoint(
-        PurchaseBookRequested purchaseBookRequested
-    ) {
+    public static void readRemainingPoint(PurchaseBookRequested purchaseBookRequested) {
         //implement business logic here:
 
         Point point = repository().findByReaderId(purchaseBookRequested.getReaderId())
@@ -86,39 +65,58 @@ public class Point {
         pointPaymentRequested.publish();
     }
 
-    }
+    public static void usePoint(RemainingPointChecked remainingPointChecked) {
+        Point point = repository().findByReaderId(remainingPointChecked.getReaderId())
+            .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
 
-    //>>> Clean Arch / Port Method
-    //<<< Clean Arch / Port Method
-    public static void readRemainingPoint(PayRequested payRequested) {
-        //implement business logic here:
-
-        /** Example 1:  new item 
-        Point point = new Point();
-        repository().save(point);
-
-        RemainingPointChecked remainingPointChecked = new RemainingPointChecked(point);
-        remainingPointChecked.publishAfterCommit();
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(payRequested.get???()).ifPresent(point->{
-            
-            point // do something
+        if (point.getPoint() >= remainingPointChecked.getPoint()) {
+            point.setPoint(point.getPoint() - remainingPointChecked.getPoint());
             repository().save(point);
 
-            RemainingPointChecked remainingPointChecked = new RemainingPointChecked(point);
-            remainingPointChecked.publishAfterCommit();
+            BuyApproved approved = new BuyApproved(point);
+            approved.setReaderId(point.getReaderId());
+            approved.setPoint(remainingPointChecked.getPoint());
+            approved.publish();
 
-         });
-        */
+        } else {
+            BuyRejected rejected = new BuyRejected(point);
+            rejected.setReaderId(point.getReaderId());
+            rejected.setPoint(remainingPointChecked.getPoint());
+            rejected.setReason("잔액 부족");
+            rejected.publish();
+        }
 
     }
 
-    //>>> Clean Arch / Port Method
-    //<<< Clean Arch / Port Method
+    public static void leadAdditionalBuyAlert(BuyRejected buyRejected) {
+        RestTemplate restTemplate = new RestTemplate();
+
+        // 수정해야하는 프론트 코드
+        String frontUrl = "http://frontend-service/api/notification/failure"; 
+        Map<String, Object> body = new HashMap<>();
+        body.put("readerId", event.getReaderId());
+        body.put("message", "도서 구매가 포인트 부족으로 실패했습니다.");
+        body.put("reason", "NOT_ENOUGH_POINT");
+
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(frontUrl, body, String.class);
+            System.out.println("프론트 전송 성공: " + response.getStatusCode());
+        } catch (Exception e) {
+            System.out.println("프론트 전송 실패: " + e.getMessage());
+        }
+
+    }
+
+    public static void buyPoint(Point command) {
+        this.readerId = command.getReaderId();
+        this.point = command.getPoint();
+
+        // event driven
+        PointPaymentRequested pointPaymentRequested = new PointPaymentRequested(this);
+        pointPaymentRequested.publish();
+    }
+
+        // 포인트 충전
     public static void chargePoint(PaymentFinished paymentFinished) {
 
         PaymentRequested paymentRequested = new PaymentRequested();
@@ -156,52 +154,7 @@ public class Point {
 
     }
 
-    //>>> Clean Arch / Port Method
-    //<<< Clean Arch / Port Method
-    public static void usePoint(RemainingPointChecked remainingPointChecked) {
-        Point point = repository().findByReaderId(remainingPointChecked.getReaderId())
-            .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
-
-        if (point.getPoint() >= remainingPointChecked.getPoint()) {
-            point.setPoint(point.getPoint() - remainingPointChecked.getPoint());
-            repository().save(point);
-
-            BuyApproved approved = new BuyApproved(point);
-            approved.setReaderId(point.getReaderId());
-            approved.setPoint(remainingPointChecked.getPoint());
-            approved.publish();
-
-        } else {
-            BuyRejected rejected = new BuyRejected(point);
-            rejected.setReaderId(point.getReaderId());
-            rejected.setPoint(remainingPointChecked.getPoint());
-            rejected.setReason("잔액 부족");
-            rejected.publish();
-        }
-
-    }
-
-    //>>> Clean Arch / Port Method
-    //<<< Clean Arch / Port Method
-    public static void leadAdditionalBuyAlert(BuyRejected buyRejected) {
-        RestTemplate restTemplate = new RestTemplate();
-
-        // 수정해야하는 프론트 코드
-        String frontUrl = "http://frontend-service/api/notification/failure"; 
-        Map<String, Object> body = new HashMap<>();
-        body.put("readerId", event.getReaderId());
-        body.put("message", "도서 구매가 포인트 부족으로 실패했습니다.");
-        body.put("reason", "NOT_ENOUGH_POINT");
-
-        try {
-            ResponseEntity<String> response = restTemplate.postForEntity(frontUrl, body, String.class);
-            System.out.println("프론트 전송 성공: " + response.getStatusCode());
-        } catch (Exception e) {
-            System.out.println("프론트 전송 실패: " + e.getMessage());
-        }
-
-    }
-
+    // 포인트 결제 실패 알림
     //>>> Clean Arch / Port Method
     //<<< Clean Arch / Port Method
     public static void alertPayFailed(PaymentFailed paymentFailed) {

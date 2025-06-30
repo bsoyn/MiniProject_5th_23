@@ -13,11 +13,25 @@ import untitled.domain.*;
 //<<< Clean Arch / Inbound Adaptor
 
 @RestController
-// @RequestMapping(value="/points")
+@RequestMapping(value="/points")
 @Transactional
 public class PointController {
 
     @Autowired
     PointRepository pointRepository;
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<?> buyPoint(
+        @PathVariable Long id,
+        @RequestBody Point command
+    ) {
+        Point point = pointRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Point 계정 없음"));
+
+        point.buyPoint(command);  // <- 도메인 로직 수행
+
+        return ResponseEntity.ok();
+    }    
+
 }
 //>>> Clean Arch / Inbound Adaptor
