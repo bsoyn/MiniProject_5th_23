@@ -76,27 +76,15 @@ public class Point {
     ) {
         //implement business logic here:
 
-        /** Example 1:  new item 
-        Point point = new Point();
-        repository().save(point);
-
-        RemainingPointChecked remainingPointChecked = new RemainingPointChecked(point);
-        remainingPointChecked.publishAfterCommit();
-        */
-
-        /** Example 2:  finding and process
+        Point point = repository().findByReaderId(purchaseBookRequested.getReaderId())
+        .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
         
-
-        repository().findById(purchaseBookRequested.get???()).ifPresent(point->{
-            
-            point // do something
-            repository().save(point);
-
-            RemainingPointChecked remainingPointChecked = new RemainingPointChecked(point);
-            remainingPointChecked.publishAfterCommit();
-
-         });
-        */
+        // 포인트 결제 요청 이벤트 발행
+        PointPaymentRequested pointPaymentRequested = new PointPaymentRequested(point);
+        pointPaymentRequested.setReaderId(point.getReaderId());
+        pointPaymentRequested.setPoint(purchaseBookRequested.getPoint()); 
+        pointPaymentRequested.publishAfterCommit();
+}
 
     }
 

@@ -17,6 +17,7 @@ public class PointPaymentRequested extends AbstractEvent {
 
     public PointPaymentRequested(Point aggregate) {
         super(aggregate);
+        this.readerId = aggregate.getReaderId();
     }
 
     public PointPaymentRequested() {

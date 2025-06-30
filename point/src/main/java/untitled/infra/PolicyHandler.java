@@ -53,6 +53,11 @@ public class PolicyHandler {
             "\n\n"
         );
 
+        Point point = Point.repository().findByReaderId(event.getReaderId())
+        .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
+
+        
+
         // Sample Logic //
         Point.readRemainingPoint(event);
     }
