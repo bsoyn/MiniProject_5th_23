@@ -132,38 +132,45 @@ public class Point {
 
     // 포인트 충전
     public static void chargePoint(PaymentFinished paymentFinished) {
+        Point point = repository().findByReaderId(paymentFinished.getReaderId())
+            .orElseThrow(() -> new RuntimeException("포인트 계정이 없습니다."));
 
+        Integer current = point.getPoint() != null ? point.getPoint() : 0;
+        Integer added = paymentFinished.getPoint() != null ? paymentFinished.getPoint() : 0;
 
+        point.setPoint(current + added); // 기존 + 새로 충전
+        repository().save(point);
+
+        // 결제 성공 여부에 관계없이 후속 알림 메시지 발행
+        PointUsageRequested usageRequested = new PointUsageRequested();
+        usageRequested.setReaderId(paymentFinished.getReaderId());
+        usageRequested.setPoint(paymentFinished.getPoint());
+        usageRequested.setPaymentId(paymentFinished.getId());
+        usageRequested.setIsCompleted(true); // 결제 성공
+        usageRequested.publishAfterCommit();
     }
+
 
     // 포인트 결제 실패 알림
     //>>> Clean Arch / Port Method
     //<<< Clean Arch / Port Method
-    public static void alertPayFailed(PaymentFailed paymentFailed) {
-        //implement business logic here:
+    public static void chargePoint(PaymentFinished paymentFinished) {
+        Point point = repository().findByReaderId(paymentFinished.getReaderId())
+            .orElseThrow(() -> new RuntimeException("포인트 계정이 없습니다."));
 
-        /** Example 1:  new item 
-        Point point = new Point();
+        Integer current = point.getPoint() != null ? point.getPoint() : 0;
+        Integer added = paymentFinished.getPoint() != null ? paymentFinished.getPoint() : 0;
+
+        point.setPoint(current + added); // 기존 + 새로 충전
         repository().save(point);
 
-        */
-
-        /** Example 2:  finding and process
-        
-        // if paymentFailed.externalPaymentModuleId exists, use it
-        
-        // ObjectMapper mapper = new ObjectMapper();
-        // Map<, Object> paymentMap = mapper.convertValue(paymentFailed.getExternalPaymentModuleId(), Map.class);
-
-        repository().findById(paymentFailed.get???()).ifPresent(point->{
-            
-            point // do something
-            repository().save(point);
-
-
-         });
-        */
-
+        // 결제 성공 여부에 관계없이 후속 알림 메시지 발행
+        PointUsageRequested usageRequested = new PointUsageRequested();
+        usageRequested.setReaderId(paymentFinished.getReaderId());
+        usageRequested.setPoint(paymentFinished.getPoint());
+        usageRequested.setPaymentId(paymentFinished.getId());
+        usageRequested.setIsCompleted(true); // 결제 성공
+        usageRequested.publishAfterCommit();
     }
     //>>> Clean Arch / Port Method
 
