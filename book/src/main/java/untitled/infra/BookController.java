@@ -9,16 +9,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import untitled.domain.*;
+import untitled.domain.Book.Book;
+import untitled.domain.BookAccess.RequestbookAuthorityCommand;
 
 //<<< Clean Arch / Inbound Adaptor
 
 @RestController
-// @RequestMapping(value="/books")
+@RequestMapping(value="/books")
 @Transactional
 public class BookController {
-
-    @Autowired
-    BookRepository bookRepository;
 
     @RequestMapping(
         value = "/books/requestbookauthority",
@@ -31,12 +30,8 @@ public class BookController {
         @RequestBody RequestbookAuthorityCommand requestbookAuthorityCommand
     ) throws Exception {
         System.out.println("##### /book/requestbookAuthority  called #####");
-       
-        Book book = new Book();
-        
+
         book.requestbookAuthority(requestbookAuthorityCommand);
-        
-        bookRepository.save(book);
         
         return book;
     }

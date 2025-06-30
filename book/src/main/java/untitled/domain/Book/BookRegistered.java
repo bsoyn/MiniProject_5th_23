@@ -1,4 +1,4 @@
-package untitled.domain;
+package untitled.domain.Book;
 
 import java.time.LocalDate;
 import java.util.*;

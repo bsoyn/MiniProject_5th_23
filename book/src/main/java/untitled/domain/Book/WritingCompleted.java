@@ -1,10 +1,7 @@
-package untitled.domain;
+package untitled.domain.Book;
 
-import java.util.*;
 import lombok.*;
-import untitled.domain.*;
 import untitled.infra.AbstractEvent;
-import java.io.File;
 
 @Data
 @ToString
