@@ -6,7 +6,7 @@ import lombok.*;
 import untitled.domain.*;
 import untitled.infra.AbstractEvent;
 
-import java.io.*; 
+import java.io.*;
 
 //<<< DDD / Domain Event
 @Data
@@ -18,7 +18,7 @@ public class PublicationRequested extends AbstractEvent {
     private Long id;
     private Long authorId;
     private String title;
-    private String contentPath; 
+    private String content;
     private String imageUrl;
 
     public PublicationRequested(Manuscript manuscript) {
@@ -26,9 +26,7 @@ public class PublicationRequested extends AbstractEvent {
         this.id = manuscript.getId();
         this.authorId = manuscript.getAuthorId();
         this.title = manuscript.getTitle();
-        this.contentPath = manuscript.getContentPath();
+        this.content = manuscript.getContent();
         this.imageUrl = manuscript.getImageUrl();
     }
 }
-
-//>>> DDD / Domain Event

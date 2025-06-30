@@ -11,12 +11,15 @@ import untitled.infra.AbstractEvent;
 @ToString
 public class CoverCreated extends AbstractEvent {
 
-    private Long id;
+    private Long manuscriptId;
     private Long bookId;
     private String imageUrl;
 
     public CoverCreated(BookCover aggregate) {
         super(aggregate);
+        this.manuscriptId = aggregate.getManuscriptId();
+        this.bookId = aggregate.getBookId();
+        this.imageUrl = aggregate.getImageUrl();
     }
 
     public CoverCreated() {

@@ -20,65 +20,29 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 
-
-//<<< Clean Arch / Inbound Adaptor
-
 @RestController
-// @RequestMapping(value="/manuscripts")
 @Transactional
 public class ManuscriptController {
 
     @Autowired
     ManuscriptRepository manuscriptRepository;
 
-
-    // @RequestMapping(
-    //     value = "/manuscripts/request-publication",
-    //     method = RequestMethod.POST,
-    //     produces = "application/json;charset=UTF-8"
-    // )
-    // public Manuscript requestPublication(
-    //     HttpServletRequest request,
-    //     HttpServletResponse response,
-    //     @RequestBody RequestPublicationCommand requestPublicationCommand
-    // ) throws Exception {
-    //     System.out.println(
-    //         "##### /manuscript/requestPublication  called #####"
-    //     );
-    //     Manuscript manuscript = new Manuscript();
-    //     manuscript.requestPublication(requestPublicationCommand);
-    //     manuscriptRepository.save(manuscript);
-    //     return manuscript;
-    // }
-
-    @PostMapping(value = "/manuscripts/request-publication", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RequestMapping(
+        value = "/manuscripts/request-publication",
+        method = RequestMethod.POST,
+        produces = "application/json;charset=UTF-8"
+    )
     public Manuscript requestPublication(
-        @RequestParam("authorId") Long authorId,
-        @RequestParam("title") String title,
-        @RequestPart("content") MultipartFile contentFile
-    ) throws IOException {
-
-        System.out.println("##### /manuscript/request-publication  called #####");
-        
-         // 1. 저장할 경로 설정
-        String filename = UUID.randomUUID() + "_" + contentFile.getOriginalFilename();
-        Path filePath = Paths.get("uploads", filename);
-        Files.createDirectories(filePath.getParent());
-        Files.write(filePath, contentFile.getBytes());
-        
-        RequestPublicationCommand command = new RequestPublicationCommand();
-        command.setAuthorId(authorId);
-        command.setTitle(title);
-        command.setContent(filePath.toFile());
+        HttpServletRequest request,
+        HttpServletResponse response,
+        @RequestBody RequestPublicationCommand requestPublicationCommand
+    ) throws Exception {
+        System.out.println(
+            "##### /manuscript/requestPublication  called #####"
+        );
 
         Manuscript manuscript = new Manuscript();
-        manuscript.requestPublication(command);
-        manuscriptRepository.save(manuscript);
-
+        manuscript.requestPublication(requestPublicationCommand);
         return manuscript;
     }
-
-
-
 }
-//>>> Clean Arch / Inbound Adaptor

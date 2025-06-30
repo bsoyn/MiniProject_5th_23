@@ -15,7 +15,7 @@ public class ManuscriptService {
         Manuscript manuscript = new Manuscript();
         manuscript.setAuthorId(command.getAuthorId());
         manuscript.setTitle(command.getTitle());
-        manuscript.setContentPath(command.getContent().getPath());
+        manuscript.setContent(command.getContent());
 
         manuscriptRepository.save(manuscript);
 
