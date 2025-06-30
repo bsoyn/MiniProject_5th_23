@@ -34,7 +34,7 @@ public class Payment {
         PaymentRepository paymentRepository = PaymentApplication.applicationContext.getBean(
             PaymentRepository.class
         );
-        return paymentRepository;
+        HPreturn paymentRepository;
     }
 
     // 여기서 결제 성공하면, 완료 해서 보내고, 실패하면, 실패로 보내고..
