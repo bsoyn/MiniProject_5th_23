@@ -1,8 +1,6 @@
 package untitled.infra;
 
 import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,8 +10,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import untitled.domain.*;
 
-//<<< Clean Arch / Inbound Adaptor
-
 @RestController
 @RequestMapping("/authors")
 @Transactional
@@ -22,7 +18,6 @@ public class AuthorController {
     @Autowired
     AuthorRepository authorRepository;
 
-    // 신규 등록: POST /authors
     @PostMapping(produces = "application/json;charset=UTF-8")
     public ResponseEntity<Author> createAuthor(@RequestBody RegisterCommand registerCommand) {
         System.out.println("##### /authors POST called #####");
@@ -37,7 +32,6 @@ public class AuthorController {
         }
     }
 
-    // 정보 수정: PATCH /authors/{id}
     @PatchMapping(value = "/{id}", produces = "application/json;charset=UTF-8")
     public ResponseEntity<Author> updateInfo(
         @PathVariable(value = "id") Long id,
@@ -61,7 +55,6 @@ public class AuthorController {
         }
     }
     
-    // 작가 조회: GET /authors/{id}
     @GetMapping(value = "/{id}", produces = "application/json;charset=UTF-8")
     public ResponseEntity<Author> getAuthor(@PathVariable(value = "id") Long id) {
         try {
@@ -79,7 +72,6 @@ public class AuthorController {
         }
     }
     
-    // 전체 작가 목록 조회: GET /authors
     @GetMapping(produces = "application/json;charset=UTF-8")
     public ResponseEntity<Iterable<Author>> getAllAuthors() {
         try {
@@ -91,4 +83,3 @@ public class AuthorController {
         }
     }
 }
-//>>> Clean Arch / Inbound Adaptor

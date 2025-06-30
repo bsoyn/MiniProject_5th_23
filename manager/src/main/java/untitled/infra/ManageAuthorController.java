@@ -1,8 +1,6 @@
 package untitled.infra;
 
 import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,8 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import untitled.domain.*;
-
-//<<< Clean Arch / Inbound Adaptor
 
 @RestController
 @RequestMapping("/manageAuthors")
@@ -31,7 +27,6 @@ public class ManageAuthorController {
                 author.setIsApproval(true);
                 ManageAuthor savedAuthor = manageAuthorRepository.save(author);
 
-                // 승인 이벤트 발행
                 AuthorApproved event = new AuthorApproved(author);
                 event.publishAfterCommit();
 
@@ -54,7 +49,6 @@ public class ManageAuthorController {
                 author.setIsApproval(false);
                 ManageAuthor savedAuthor = manageAuthorRepository.save(author);
 
-                // 거부 이벤트 발행
                 AuthorDenied event = new AuthorDenied(author);
                 event.publishAfterCommit();
 
@@ -68,7 +62,6 @@ public class ManageAuthorController {
         }
     }
     
-    // 작가 목록 조회: GET /manageAuthors
     @GetMapping
     public ResponseEntity<Iterable<ManageAuthor>> getAllAuthors() {
         try {
@@ -80,7 +73,6 @@ public class ManageAuthorController {
         }
     }
     
-    // 특정 작가 조회: GET /manageAuthors/{id}
     @GetMapping("/{id}")
     public ResponseEntity<ManageAuthor> getAuthor(@PathVariable Long id) {
         try {
@@ -96,4 +88,3 @@ public class ManageAuthorController {
         }
     }
 }
-//>>> Clean Arch / Inbound Adaptor
