@@ -15,9 +15,9 @@ public class BoolAccessRequested extends AbstractEvent {
     private Long id;
     private String title;
     private Long authorId;
-    private File contents;
+    private String contents;
     private String summary;
-    private File image;
+    private String imageUrl;
     private String category;
     private Float price;
     private Long readerId;

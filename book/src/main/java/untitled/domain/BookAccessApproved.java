@@ -5,7 +5,6 @@ import java.util.*;
 import lombok.*;
 import untitled.domain.*;
 import untitled.infra.AbstractEvent;
-import java.io.File;
 
 //<<< DDD / Domain Event
 @Data
@@ -15,7 +14,7 @@ public class BookAccessApproved extends AbstractEvent {
     private Long id;
     private String title;
     private Long authorId;
-    private File contents;
+    private String contents;
     private String summary;
     private String imageUrl;
     private String category;
