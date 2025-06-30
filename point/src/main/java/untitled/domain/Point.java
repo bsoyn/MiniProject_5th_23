@@ -186,7 +186,7 @@ public class Point {
     public static void leadAdditionalBuyAlert(BuyRejected buyRejected) {
         RestTemplate restTemplate = new RestTemplate();
 
-        // 수정해야하는 프론트 코
+        // 수정해야하는 프론트 코드
         String frontUrl = "http://frontend-service/api/notification/failure"; 
         Map<String, Object> body = new HashMap<>();
         body.put("readerId", event.getReaderId());
