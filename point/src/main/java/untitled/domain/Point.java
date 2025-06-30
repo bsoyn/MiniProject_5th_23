@@ -30,6 +30,8 @@ public class Point {
 
     private String impUid;
 
+    private Integer cost;
+
     @PreUpdate
     public void onPreUpdate() {
         PointPaymentRequested pointPaymentRequested = new PointPaymentRequested(
@@ -115,17 +117,16 @@ public class Point {
 
     }
 
-    public void buyPoint(PointChargeRequested command) {
-        // this.readerId = command.getReaderId();
-        // this.point = command.getPoint();
-        // this.impUid = command.getImpUid();
+    public void buyPoint(BuyDto command) {
+        this.readerId = command.getReaderId();
+        this.point = command.getPoint();
+        this.impUid = command.getImpUid();
+        this.cost = command.getCost();
 
         // event driven
-        PointChargeRequested pointPaymentRequested = new PointPaymentRequested(
-            this.id, this.readerId, command.getPoint(), command.getImpUid(), command.getCost()
-        );
+        PointChargeRequested event = new PointChargeRequested(this);
 
-        pointPaymentRequested.publish();
+        event.publish();
     }
 
 

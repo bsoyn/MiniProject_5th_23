@@ -23,7 +23,7 @@ public class PointController {
     @PatchMapping("/{id}")
     public ResponseEntity<?> buyPoint(
         @PathVariable Long id,
-        @RequestBody PointChargeRequested command
+        @RequestBody BuyDto command
         
     ) {
         Point point = pointRepository.findById(id)
@@ -32,7 +32,7 @@ public class PointController {
         point.buyPoint(command);  // <- 도메인 로직 수행
 
         return ResponseEntity.ok();
-    }    
+    }
 
 }
 //>>> Clean Arch / Inbound Adaptor
