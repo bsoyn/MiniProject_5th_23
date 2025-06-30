@@ -184,25 +184,21 @@ public class Point {
     //>>> Clean Arch / Port Method
     //<<< Clean Arch / Port Method
     public static void leadAdditionalBuyAlert(BuyRejected buyRejected) {
-        //implement business logic here:
+        RestTemplate restTemplate = new RestTemplate();
 
-        /** Example 1:  new item 
-        Point point = new Point();
-        repository().save(point);
+        // 수정해야하는 프론트 코
+        String frontUrl = "http://frontend-service/api/notification/failure"; 
+        Map<String, Object> body = new HashMap<>();
+        body.put("readerId", event.getReaderId());
+        body.put("message", "도서 구매가 포인트 부족으로 실패했습니다.");
+        body.put("reason", "NOT_ENOUGH_POINT");
 
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(buyRejected.get???()).ifPresent(point->{
-            
-            point // do something
-            repository().save(point);
-
-
-         });
-        */
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(frontUrl, body, String.class);
+            System.out.println("프론트 전송 성공: " + response.getStatusCode());
+        } catch (Exception e) {
+            System.out.println("프론트 전송 실패: " + e.getMessage());
+        }
 
     }
 
