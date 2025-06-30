@@ -31,9 +31,13 @@ public class BookController {
         @RequestBody RequestbookAuthorityCommand requestbookAuthorityCommand
     ) throws Exception {
         System.out.println("##### /book/requestbookAuthority  called #####");
+       
         Book book = new Book();
+        
         book.requestbookAuthority(requestbookAuthorityCommand);
+        
         bookRepository.save(book);
+        
         return book;
     }
 }

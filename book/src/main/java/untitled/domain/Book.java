@@ -12,7 +12,7 @@ import untitled.BookApplication;
 import untitled.domain.BookAccessApproved;
 import untitled.domain.BookAccessRejected;
 import untitled.domain.BookRegistered;
-import untitled.domain.BoolAccessRequested;
+import untitled.domain.BooKAccessRequested;
 
 @Entity
 @Table(name = "Book_table")
@@ -42,8 +42,8 @@ public class Book {
 
     @PostPersist
     public void onPostPersist() {
-        BoolAccessRequested boolAccessRequested = new BoolAccessRequested(this);
-        boolAccessRequested.publishAfterCommit();
+        BooKAccessRequested bookAccessRequested = new BooKAccessRequested(this);
+        bookAccessRequested.publishAfterCommit();
 
         BookRegistered bookRegistered = new BookRegistered(this);
         bookRegistered.publishAfterCommit();
@@ -67,7 +67,6 @@ public class Book {
         RequestbookAuthorityCommand requestbookAuthorityCommand
     ) {
         //implement business logic here:
-
     }
 
     //>>> Clean Arch / Port Method
