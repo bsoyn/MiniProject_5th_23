@@ -9,6 +9,6 @@ public class RequestPublicationCommand {
     private Long id;
     private Long authorId;
     private String title;
-    private String content;
+    private String contents;
     private String imageUrl;
 }

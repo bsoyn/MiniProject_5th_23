@@ -21,6 +21,8 @@ public class Book {
 
     private String summary;
 
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
 
     private String category;

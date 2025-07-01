@@ -25,6 +25,7 @@ import java.util.List;
 
 @RestController
 @Transactional
+@CrossOrigin(origins = "*")
 public class ManuscriptController {
 
     @Autowired

@@ -8,5 +8,5 @@ public class TempSaveManuscriptCommand{
     private Long authorId; 
     private Long manuscriptId; 
     private String title; 
-    private String content; 
+    private String contents; 
 }
