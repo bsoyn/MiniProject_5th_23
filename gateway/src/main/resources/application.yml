@@ -34,7 +34,7 @@ spring:
           predicates:
             - Path=/purchasedBooks/**, 
         - id: subscription
-          uri: http://localhost:8088
+          uri: http://localhost:8093
           predicates:
             - Path=/subscribes/**, 
         - id: payment
