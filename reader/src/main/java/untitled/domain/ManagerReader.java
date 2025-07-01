@@ -32,7 +32,7 @@ public class ManagerReader {
 
     private Boolean isSubscribe;
 
-    private int isKT;
+    private Boolean isKT;
 
     @PostPersist
     public void onPostPersist() {
@@ -47,7 +47,7 @@ public class ManagerReader {
         );
         return managerReaderRepository;
     }
-    // PasswordEncoder에 접근하기 위한 static 메서드 (새로 추가)
+    // PasswordEncoder에 접근하기 위한 static 메서드
     public static PasswordEncoder passwordEncoder() {
         return ReaderApplication.applicationContext.getBean(PasswordEncoder.class);
     }

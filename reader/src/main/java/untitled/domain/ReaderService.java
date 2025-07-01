@@ -32,7 +32,7 @@ public class ReaderService {
         newReader.setPassword(encodedPassword);
         newReader.setName(requestDto.getName());
         //기본 값 = kt아님, 구독안함
-        int isKT = Optional.ofNullable(requestDto.getIsKT()).orElse(0);
+        Boolean isKT = Optional.ofNullable(requestDto.getIsKT()).orElse(false);
         newReader.setIsKT(isKT);
         boolean isSubscribed = Optional.ofNullable(requestDto.getIsSubscribe()).orElse(false);
         newReader.setIsSubscribe(isSubscribed);

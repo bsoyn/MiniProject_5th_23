@@ -10,5 +10,5 @@ public class RegisterRequestDTO {
     private String password;
     private String name;
     private Boolean isSubscribe;
-    private int isKT;
+    private Boolean isKT;
 }
