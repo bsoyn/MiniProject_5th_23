@@ -17,10 +17,13 @@ public class Book {
 
     private Long authorId;
 
+    @Lob
     private String contents;
 
     private String summary;
 
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
 
     private String category;
