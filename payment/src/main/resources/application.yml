@@ -1,6 +1,10 @@
 server:
   port: 8080
 
+iamport:
+  api-key: ${IAMPORT_API_KEY}
+  api-secret: ${IAMPORT_API_SECRET}
+
 spring:
   application:
     name: payment

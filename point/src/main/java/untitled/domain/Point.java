@@ -7,7 +7,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import javax.persistence.*;
-import lombok.Data;
+import lombok.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+import java.util.HashMap;
 import untitled.PointApplication;
 import untitled.domain.BuyApproved;
 import untitled.domain.BuyRejected;
@@ -17,6 +20,8 @@ import untitled.domain.RemainingPointChecked;
 @Entity
 @Table(name = "Point_table")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 //<<< DDD / Aggregate Root
 public class Point {
 
@@ -27,6 +32,10 @@ public class Point {
     private Long readerId;
 
     private Integer point;
+
+    private String impUid;
+
+    private Integer cost;
 
     @PreUpdate
     public void onPreUpdate() {
@@ -43,204 +52,150 @@ public class Point {
         return pointRepository;
     }
 
-    //<<< Clean Arch / Port Method
     public static void givepoint(ReaderJoined readerJoined) {
-        //implement business logic here:
-
-        /** Example 1:  new item 
         Point point = new Point();
+        point.setReaderId(readerJoined.getId());
+
+        int basePoint = (readerJoined.getIsKT() == true) ? 5000 : 1000;
+        point.setPoint(basePoint);
+
         repository().save(point);
-
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(readerJoined.get???()).ifPresent(point->{
-            
-            point // do something
-            repository().save(point);
-
-
-         });
-        */
 
     }
 
-    //>>> Clean Arch / Port Method
-    //<<< Clean Arch / Port Method
-    public static void readRemainingPoint(
-        PurchaseBookRequested purchaseBookRequested
-    ) {
+    // 수정 완료
+    public static void readRemainingPoint(PurchaseBookRequested purchaseBookRequested) {
         //implement business logic here:
 
-        /** Example 1:  new item 
-        Point point = new Point();
-        repository().save(point);
-
-        RemainingPointChecked remainingPointChecked = new RemainingPointChecked(point);
-        remainingPointChecked.publishAfterCommit();
-        */
-
-        /** Example 2:  finding and process
+        Point point = repository().findByReaderId(purchaseBookRequested.getReaderId())
+        .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
         
-
-        repository().findById(purchaseBookRequested.get???()).ifPresent(point->{
-            
-            point // do something
-            repository().save(point);
-
-            RemainingPointChecked remainingPointChecked = new RemainingPointChecked(point);
-            remainingPointChecked.publishAfterCommit();
-
-         });
-        */
-
+        // 포인트로 도서 결제 요청 이벤트 발행
+        PointPaymentRequested pointPaymentRequested = new PointPaymentRequested();
+        pointPaymentRequested.setReaderId(purchaseBookRequested.getReaderId());
+        pointPaymentRequested.setPoint(point.getPoint());
+        pointPaymentRequested.setBookId(purchaseBookRequested.getBookId());
+        pointPaymentRequested.publish();
     }
 
-    //>>> Clean Arch / Port Method
-    //<<< Clean Arch / Port Method
-    public static void readRemainingPoint(PayRequested payRequested) {
-        //implement business logic here:
-
-        /** Example 1:  new item 
-        Point point = new Point();
-        repository().save(point);
-
-        RemainingPointChecked remainingPointChecked = new RemainingPointChecked(point);
-        remainingPointChecked.publishAfterCommit();
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(payRequested.get???()).ifPresent(point->{
-            
-            point // do something
-            repository().save(point);
-
-            RemainingPointChecked remainingPointChecked = new RemainingPointChecked(point);
-            remainingPointChecked.publishAfterCommit();
-
-         });
-        */
-
-    }
-
-    //>>> Clean Arch / Port Method
-    //<<< Clean Arch / Port Method
-    public static void chargePoint(PaymentFinished paymentFinished) {
-        //implement business logic here:
-
-        /** Example 1:  new item 
-        Point point = new Point();
-        repository().save(point);
-
-        */
-
-        /** Example 2:  finding and process
-        
-        // if paymentFinished.externalPaymentModuleId exists, use it
-        
-        // ObjectMapper mapper = new ObjectMapper();
-        // Map<, Object> paymentMap = mapper.convertValue(paymentFinished.getExternalPaymentModuleId(), Map.class);
-
-        repository().findById(paymentFinished.get???()).ifPresent(point->{
-            
-            point // do something
-            repository().save(point);
-
-
-         });
-        */
-
-    }
-
-    //>>> Clean Arch / Port Method
-    //<<< Clean Arch / Port Method
     public static void usePoint(RemainingPointChecked remainingPointChecked) {
-        //implement business logic here:
+        Point point = repository().findByReaderId(remainingPointChecked.getReaderId())
+            .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
 
-        /** Example 1:  new item 
-        Point point = new Point();
-        repository().save(point);
-
-        BuyApproved buyApproved = new BuyApproved(point);
-        buyApproved.publishAfterCommit();
-        BuyRejected buyRejected = new BuyRejected(point);
-        buyRejected.publishAfterCommit();
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(remainingPointChecked.get???()).ifPresent(point->{
-            
-            point // do something
+        if (point.getPoint() >= remainingPointChecked.getPoint()) {
+            point.setPoint(point.getPoint() - remainingPointChecked.getPoint());
             repository().save(point);
 
-            BuyApproved buyApproved = new BuyApproved(point);
-            buyApproved.publishAfterCommit();
-            BuyRejected buyRejected = new BuyRejected(point);
-            buyRejected.publishAfterCommit();
+            BuyApproved approved = new BuyApproved(point);
+            approved.setReaderId(point.getReaderId());
+            approved.setPoint(remainingPointChecked.getPoint());
 
-         });
-        */
+            // 💡 도서 구매 vs 구독 구분 처리
+            if (remainingPointChecked.getBookId() != null) {
+                approved.setBookId(remainingPointChecked.getBookId());
+            } else {
+                approved.setSubscribeStartDate(remainingPointChecked.getSubscribeStartDate());
+                approved.setSubscribeEndDate(remainingPointChecked.getSubscribeEndDate());
+            }
 
+            approved.publish();
+
+        } else {
+            BuyRejected rejected = new BuyRejected(point);
+            rejected.setReaderId(point.getReaderId());
+            rejected.setPoint(remainingPointChecked.getPoint());
+            rejected.setReason("잔액 부족");
+
+            if (remainingPointChecked.getBookId() != null) {
+                rejected.setBookId(remainingPointChecked.getBookId());
+            } else {
+                rejected.setSubscribeStartDate(remainingPointChecked.getSubscribeStartDate());
+                rejected.setSubscribeEndDate(remainingPointChecked.getSubscribeEndDate());
+            }
+
+            rejected.publish();
+        }
     }
 
-    //>>> Clean Arch / Port Method
-    //<<< Clean Arch / Port Method
+
     public static void leadAdditionalBuyAlert(BuyRejected buyRejected) {
-        //implement business logic here:
+        RestTemplate restTemplate = new RestTemplate();
 
-        /** Example 1:  new item 
-        Point point = new Point();
-        repository().save(point);
+        // 수정해야하는 프론트 코드
+        String frontUrl = "http://frontend-service/api/notification/failure"; 
+        Map<String, Object> body = new HashMap<>();
+        body.put("readerId", buyRejected.getReaderId());
+        body.put("message", "도서 구매가 포인트 부족으로 실패했습니다.");
+        body.put("reason", "NOT_ENOUGH_POINT");
 
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(buyRejected.get???()).ifPresent(point->{
-            
-            point // do something
-            repository().save(point);
-
-
-         });
-        */
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(frontUrl, body, String.class);
+            System.out.println("프론트 전송 성공: " + response.getStatusCode());
+        } catch (Exception e) {
+            System.out.println("프론트 전송 실패: " + e.getMessage());
+        }
 
     }
 
+    public static void readRemainingPoint(PayRequested payRequested) {
+        Point point = repository().findByReaderId(payRequested.getReaderId())
+            .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
+
+        int requiredPoint = 5000;
+
+        PointPaymentRequested pointPaymentRequested = new PointPaymentRequested();
+        pointPaymentRequested.setReaderId(payRequested.getReaderId());
+        pointPaymentRequested.setPoint(requiredPoint); 
+        pointPaymentRequested.setBookId(null); 
+        pointPaymentRequested.publish();
+    }
+
+
+    public void buyPoint(BuyPointDto command) {
+        this.readerId = command.getReaderId();
+        this.point = command.getPoint();
+        this.impUid = command.getImpUid();
+        this.cost = command.getCost();
+
+        // event driven
+        PointChargeRequested event = new PointChargeRequested(this);
+
+        event.publish();
+    }
+
+
+    // 포인트 충전
+    public static void chargePoint(PaymentFinished paymentFinished) {
+        Point point = repository().findByReaderId(paymentFinished.getReaderId())
+            .orElseThrow(() -> new RuntimeException("포인트 계정이 없습니다."));
+
+        Integer current = point.getPoint() != null ? point.getPoint() : 0;
+        Integer added = paymentFinished.getPoint() != null ? paymentFinished.getPoint() : 0;
+
+        point.setPoint(current + added); // 기존 + 새로 충전
+        repository().save(point);
+
+        // 결제 성공 여부에 관계없이 후속 알림 메시지 발행
+        PointUsageRequested usageRequested = new PointUsageRequested();
+        usageRequested.setReaderId(paymentFinished.getReaderId());
+        usageRequested.setPoint(paymentFinished.getPoint());
+        usageRequested.setPaymentId(paymentFinished.getId());
+        usageRequested.setIsCompleted(true); // 결제 성공
+        usageRequested.publishAfterCommit();
+    }
+
+
+    // 포인트 결제 실패 알림
     //>>> Clean Arch / Port Method
     //<<< Clean Arch / Port Method
     public static void alertPayFailed(PaymentFailed paymentFailed) {
-        //implement business logic here:
-
-        /** Example 1:  new item 
-        Point point = new Point();
-        repository().save(point);
-
-        */
-
-        /** Example 2:  finding and process
-        
-        // if paymentFailed.externalPaymentModuleId exists, use it
-        
-        // ObjectMapper mapper = new ObjectMapper();
-        // Map<, Object> paymentMap = mapper.convertValue(paymentFailed.getExternalPaymentModuleId(), Map.class);
-
-        repository().findById(paymentFailed.get???()).ifPresent(point->{
-            
-            point // do something
-            repository().save(point);
-
-
-         });
-        */
-
+        // 결제 성공 여부에 관계없이 후속 알림 메시지 발행
+        PointUsageRequested usageRequested = new PointUsageRequested();
+        usageRequested.setReaderId(paymentFailed.getReaderId());
+        usageRequested.setPoint(paymentFailed.getPoint());
+        usageRequested.setPaymentId(paymentFailed.getId());
+        usageRequested.setIsCompleted(false); // 결제 실패
+        usageRequested.publish();
     }
     //>>> Clean Arch / Port Method
 
