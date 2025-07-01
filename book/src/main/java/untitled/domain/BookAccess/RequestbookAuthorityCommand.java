@@ -1,11 +1,10 @@
-package untitled.domain;
+package untitled.domain.BookAccess;
 
-import java.time.LocalDate;
-import java.util.*;
 import lombok.Data;
 
 @Data
 public class RequestbookAuthorityCommand {
 
     private Long readerId;
+    private Long bookId;
 }
