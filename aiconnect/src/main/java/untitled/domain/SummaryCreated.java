@@ -12,13 +12,22 @@ import untitled.infra.AbstractEvent;
 public class SummaryCreated extends AbstractEvent {
 
     private Long id;
+    private Long manuscriptId; 
     private Long bookId;
     private String summary;
     private String category;
-    private Float price;
+    private Integer price;
+    private String keywords; 
 
-    public SummaryCreated(BookSummary aggregate) {
-        super(aggregate);
+    public SummaryCreated(BookSummary bookSummary) {
+        super(bookSummary);
+        this.setId(bookSummary.getId());
+        this.setManuscriptId(bookSummary.getManuscriptId()); 
+        this.setBookId(bookSummary.getBookId()); 
+        this.setSummary(bookSummary.getSummary());
+        this.setCategory(bookSummary.getCategory());
+        this.setPrice(bookSummary.getPrice());   
+        this.setKeywords(bookSummary.getKeywords());
     }
 
     public SummaryCreated() {

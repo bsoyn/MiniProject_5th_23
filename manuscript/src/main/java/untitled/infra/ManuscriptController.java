@@ -10,18 +10,29 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import untitled.domain.*;
 
-//<<< Clean Arch / Inbound Adaptor
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
+import java.util.UUID;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+
+import java.util.List;
+
 
 @RestController
-// @RequestMapping(value="/manuscripts")
 @Transactional
+@CrossOrigin(origins = "*")
 public class ManuscriptController {
 
     @Autowired
     ManuscriptRepository manuscriptRepository;
 
     @RequestMapping(
-        value = "/manuscripts/requestpublication",
+        value = "/manuscripts/request-publication",
         method = RequestMethod.POST,
         produces = "application/json;charset=UTF-8"
     )
@@ -31,12 +42,66 @@ public class ManuscriptController {
         @RequestBody RequestPublicationCommand requestPublicationCommand
     ) throws Exception {
         System.out.println(
-            "##### /manuscript/requestPublication  called #####"
+            "##### /manuscript/request-publication  called #####"
         );
+
+        if (requestPublicationCommand.getId() != null) {
+            return manuscriptRepository.findById(requestPublicationCommand.getId())
+                .map(manuscript -> {
+                    manuscript.requestPublication(requestPublicationCommand);
+                    return manuscript;
+                })
+                .orElseGet(() -> {
+                    // ID는 있으나 없으면 새로 생성
+                    Manuscript newManuscript = new Manuscript();
+                    newManuscript.requestPublication(requestPublicationCommand);
+                    return newManuscript;
+                });
+        }
+
         Manuscript manuscript = new Manuscript();
         manuscript.requestPublication(requestPublicationCommand);
-        manuscriptRepository.save(manuscript);
         return manuscript;
     }
+
+
+    @PostMapping("/manuscripts/temp-save")
+    public Manuscript tempSaveManuscript(@RequestBody TempSaveManuscriptCommand cmd) {
+
+        // 1. 이미 저장된 원고 ID가 있다면 찾아서 갱신
+        if (cmd.getManuscriptId() != null) {
+            return manuscriptRepository.findById(cmd.getManuscriptId())
+                .map(manuscript -> {
+                    manuscript.tempSave(cmd);
+                    return manuscript;
+                })
+                .orElseGet(() -> {
+                    // ID는 있으나 찾을 수 없다면 새로 저장
+                    Manuscript newManuscript = new Manuscript();
+                    newManuscript.tempSave(cmd);
+                    return manuscriptRepository.save(newManuscript);
+                });
+        }
+
+        // 2. ID가 없으면 새로 저장
+        Manuscript newManuscript = new Manuscript();
+        newManuscript.tempSave(cmd);
+        return manuscriptRepository.save(newManuscript);
+    }
+
+    // 임시 저장 원고 조회 
+    @GetMapping("/manuscripts/temp")
+    public List<Manuscript> getTempManuscripts(@RequestParam Long authorId) {
+        return manuscriptRepository.findByAuthorIdAndStatus(authorId, ManuscriptStatus.TEMP);
+    }
+
+    @GetMapping("/manuscripts/temp/{id}")
+    public Manuscript getTempManuscriptById(@PathVariable Long id) {
+        return manuscriptRepository.findById(id)
+            .filter(m -> m.getStatus() == ManuscriptStatus.TEMP)
+            .orElseThrow(() -> new RuntimeException("임시 저장된 원고를 찾을 수 없습니다."));
+    }
+
+
+
 }
-//>>> Clean Arch / Inbound Adaptor

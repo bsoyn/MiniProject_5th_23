@@ -23,6 +23,9 @@ public class PolicyHandler {
     @Autowired
     BookSummaryRepository bookSummaryRepository;
 
+    @Autowired
+    BookService bookService;
+
     @StreamListener(KafkaProcessor.INPUT)
     public void whatever(@Payload String eventString) {}
 
@@ -37,7 +40,8 @@ public class PolicyHandler {
         System.out.println(
             "\n\n##### listener CreateCover : " + summaryCreated + "\n\n"
         );
-        // Sample Logic //
+        
+        bookService.generateCover(summaryCreated);
 
     }
 
@@ -53,8 +57,6 @@ public class PolicyHandler {
             "\n\n##### listener SummaryBook : " + publicationRequested + "\n\n"
         );
 
-        // Sample Logic //
-        BookSummary.summaryBook(event);
+        bookService.summaryBook(event);
     }
 }
-//>>> Clean Arch / Inbound Adaptor

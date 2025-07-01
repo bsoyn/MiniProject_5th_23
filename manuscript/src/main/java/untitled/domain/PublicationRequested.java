@@ -6,23 +6,27 @@ import lombok.*;
 import untitled.domain.*;
 import untitled.infra.AbstractEvent;
 
+import java.io.*;
+
 //<<< DDD / Domain Event
 @Data
 @ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class PublicationRequested extends AbstractEvent {
 
     private Long id;
     private Long authorId;
     private String title;
-    private String content;
-    private File image;
+    private String contents;
+    private String imageUrl;
 
-    public PublicationRequested(Manuscript aggregate) {
-        super(aggregate);
-    }
-
-    public PublicationRequested() {
-        super();
+    public PublicationRequested(Manuscript manuscript) {
+        super(manuscript);
+        this.id = manuscript.getId();
+        this.authorId = manuscript.getAuthorId();
+        this.title = manuscript.getTitle();
+        this.contents = manuscript.getContents();
+        this.imageUrl = manuscript.getImageUrl();
     }
 }
-//>>> DDD / Domain Event

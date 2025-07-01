@@ -39,11 +39,24 @@
 			<artifactId>h2</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- Jackson (JSON 처리) -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.11.3</version>
+		</dependency>
+
+		<!-- OkHttp (HTTP 클라이언트) -->
+		<dependency>
+			<groupId>com.squareup.okhttp3</groupId>
+			<artifactId>okhttp</artifactId>
+			<version>4.10.0</version>
+		</dependency>	
       <!-- lombok -->
 		<dependency>
 				<groupId>org.projectlombok</groupId>
 				<artifactId>lombok</artifactId>
-				<version>1.18.12</version>
+				<version>1.18.30</version>
 				<scope>provided</scope>
 		</dependency>
 		<dependency>

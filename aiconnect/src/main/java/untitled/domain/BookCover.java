@@ -11,6 +11,16 @@ import lombok.Data;
 import untitled.AiconnectApplication;
 import untitled.domain.CoverCreated;
 
+import java.io.IOException;
+
+import org.springframework.beans.BeanUtils;
+import okhttp3.*; // OkHttpClient, Request, RequestBody, MediaType, Response
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.concurrent.TimeUnit;
+
+
 @Entity
 @Table(name = "BookCover_table")
 @Data
@@ -21,8 +31,12 @@ public class BookCover {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    private Long manuscriptId; 
+
     private Long bookId;
 
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
 
     @PostPersist
@@ -37,5 +51,8 @@ public class BookCover {
         );
         return bookCoverRepository;
     }
+
+    
+
 }
 //>>> DDD / Aggregate Root

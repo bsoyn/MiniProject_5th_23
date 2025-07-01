@@ -17,6 +17,10 @@ public class PurchaseBookConfirmed extends AbstractEvent {
 
     public PurchaseBookConfirmed(PurchasedBook aggregate) {
         super(aggregate);
+
+        this.id = aggregate.getId();
+        this.readerId = aggregate.getReaderId();
+        this.bookId = aggregate.getBookId();
     }
 
     public PurchaseBookConfirmed() {

@@ -12,8 +12,10 @@ import org.springframework.util.MimeTypeUtils;
 import untitled.ManuscriptApplication;
 import untitled.config.kafka.KafkaProcessor;
 
+import java.io.Serializable;
+
 //<<< Clean Arch / Outbound Adaptor
-public class AbstractEvent {
+public class AbstractEvent implements Serializable {
 
     String eventType;
     Long timestamp;

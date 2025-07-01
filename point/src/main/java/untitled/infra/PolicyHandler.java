@@ -1,5 +1,8 @@
 package untitled.infra;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+import java.util.HashMap;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.naming.NameParser;
@@ -46,15 +49,19 @@ public class PolicyHandler {
     public void wheneverPurchaseBookRequested_ReadRemainingPoint(
         @Payload PurchaseBookRequested purchaseBookRequested
     ) {
-        PurchaseBookRequested event = purchaseBookRequested;
         System.out.println(
             "\n\n##### listener ReadRemainingPoint : " +
             purchaseBookRequested +
             "\n\n"
         );
 
+        Point point = Point.repository().findByReaderId(purchaseBookRequested.getReaderId())
+        .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
+
+
+
         // Sample Logic //
-        Point.readRemainingPoint(event);
+        Point.readRemainingPoint(purchaseBookRequested);
     }
 
     @StreamListener(
@@ -80,13 +87,12 @@ public class PolicyHandler {
     public void wheneverPaymentFinished_ChargePoint(
         @Payload PaymentFinished paymentFinished
     ) {
-        PaymentFinished event = paymentFinished;
         System.out.println(
             "\n\n##### listener ChargePoint : " + paymentFinished + "\n\n"
         );
 
         // Sample Logic //
-        Point.chargePoint(event);
+        Point.chargePoint(paymentFinished);
     }
 
     @StreamListener(

@@ -11,6 +11,11 @@ import lombok.Data;
 import untitled.ManuscriptApplication;
 import untitled.domain.WritingCompleted;
 
+import java.io.File;
+import org.springframework.beans.BeanUtils;
+import untitled.domain.ManuscriptStatus;
+
+
 @Entity
 @Table(name = "Manuscript_table")
 @Data
@@ -25,16 +30,21 @@ public class Manuscript {
 
     private String title;
 
-    private String content;
+    @Lob
+    private String contents;
 
-    @Embedded
-    private File image;
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String imageUrl;
 
     private String summary;
 
-    private Tags category;
+    private String category;
 
     private Integer price;
+
+    @Enumerated(EnumType.STRING)
+    private ManuscriptStatus status;
 
     public static ManuscriptRepository repository() {
         ManuscriptRepository manuscriptRepository = ManuscriptApplication.applicationContext.getBean(
@@ -43,110 +53,86 @@ public class Manuscript {
         return manuscriptRepository;
     }
 
-    public void saveManuscript() {
-        //
-    }
-
     //<<< Clean Arch / Port Method
     public void requestPublication(
         RequestPublicationCommand requestPublicationCommand
     ) {
-        //implement business logic here:
+            
+            this.authorId = requestPublicationCommand.getAuthorId();
+            this.title = requestPublicationCommand.getTitle();
+            this.contents = requestPublicationCommand.getContents();
+            this.status = ManuscriptStatus.SUBMITTED;
 
-        PublicationRequested publicationRequested = new PublicationRequested(
-            this
-        );
-        publicationRequested.publishAfterCommit();
+            repository().save(this);
+
+            PublicationRequested publicationRequested = new PublicationRequested(
+                this
+            );
+            publicationRequested.publishAfterCommit();
     }
 
     //>>> Clean Arch / Port Method
 
     //<<< Clean Arch / Port Method
     public static void alertSummaryCreated(SummaryCreated summaryCreated) {
-        //implement business logic here:
+        repository().findById(summaryCreated.getManuscriptId()).ifPresent(manuscript -> {
+            manuscript.setSummary(summaryCreated.getSummary());
+            manuscript.setCategory(summaryCreated.getCategory());
+            manuscript.setPrice(summaryCreated.getPrice());
 
-        /** Example 1:  new item 
-        Manuscript manuscript = new Manuscript();
-        repository().save(manuscript);
-
-        */
-
-        /** Example 2:  finding and process
-        
-        // if summaryCreated.genAiId exists, use it
-        
-        // ObjectMapper mapper = new ObjectMapper();
-        // Map<, Object> bookSummaryMap = mapper.convertValue(summaryCreated.getGenAiId(), Map.class);
-
-        repository().findById(summaryCreated.get???()).ifPresent(manuscript->{
-            
-            manuscript // do something
             repository().save(manuscript);
-
-
-         });
-        */
+    });
 
     }
 
-    //>>> Clean Arch / Port Method
-    //<<< Clean Arch / Port Method
     public static void alertCoverCreated(CoverCreated coverCreated) {
-        //implement business logic here:
-
-        /** Example 1:  new item 
-        Manuscript manuscript = new Manuscript();
-        repository().save(manuscript);
-
-        WritingCompleted writingCompleted = new WritingCompleted(manuscript);
-        writingCompleted.publishAfterCommit();
-        */
-
-        /** Example 2:  finding and process
-        
-        // if coverCreated.genAiId exists, use it
-        
-        // ObjectMapper mapper = new ObjectMapper();
-        // Map<, Object> bookCoverMap = mapper.convertValue(coverCreated.getGenAiId(), Map.class);
-
-        repository().findById(coverCreated.get???()).ifPresent(manuscript->{
-            
-            manuscript // do something
+        repository().findById(coverCreated.getManuscriptId()).ifPresent(manuscript -> {
+            manuscript.setImageUrl(coverCreated.getImageUrl());
             repository().save(manuscript);
 
-            WritingCompleted writingCompleted = new WritingCompleted(manuscript);
+            WritingCompleted writingCompleted = new WritingCompleted();
+            writingCompleted.setManuscriptId(manuscript.getId()); 
+            writingCompleted.setAuthorId(manuscript.getAuthorId());
+            writingCompleted.setTitle(manuscript.getTitle());
+            writingCompleted.setContents(manuscript.getContents());
+            writingCompleted.setImageUrl(manuscript.getImageUrl());
+            writingCompleted.setSummary(manuscript.getSummary());
+            writingCompleted.setCategory(manuscript.getCategory());
+            writingCompleted.setPrice(manuscript.getPrice());
+
             writingCompleted.publishAfterCommit();
-
-         });
-        */
+        });
 
     }
 
-    //>>> Clean Arch / Port Method
-    //<<< Clean Arch / Port Method
     public static void alertBookRegistration(BookRegistered bookRegistered) {
-        //implement business logic here:
 
-        /** Example 1:  new item 
-        Manuscript manuscript = new Manuscript();
-        repository().save(manuscript);
-
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(bookRegistered.get???()).ifPresent(manuscript->{
+        repository().findById(bookRegistered.getManuscriptId()).ifPresent(manuscript->{
             
-            manuscript // do something
+            System.out.println(
+            "\n\n##### Manuscript : " +
+            bookRegistered +
+            "\n\n"
+             );
+
+            manuscript.setStatus(ManuscriptStatus.REGISTERED); 
+
             repository().save(manuscript);
 
-
          });
-        */
+    
 
     }
-    //>>> Clean Arch / Port Method
+
+    public void tempSave(TempSaveManuscriptCommand cmd) {
+        this.authorId = cmd.getAuthorId();
+        this.title = cmd.getTitle();
+        this.contents = cmd.getContents();
+        this.status = ManuscriptStatus.TEMP;
+
+        repository().save(this);
+    }
+
 
 }
 //>>> DDD / Aggregate Root
