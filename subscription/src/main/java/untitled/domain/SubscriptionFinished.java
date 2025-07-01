@@ -16,14 +16,13 @@ public class SubscriptionFinished extends AbstractEvent {
     private Long bookId;
     private Boolean isSubscribe;
 
-    public SubscriptionFinished(Subscribe aggregate, Long bookId) {
+    public SubscriptionFinished(Subscribe aggregate, Long bookId, Boolean isSubscribe) {
         super(aggregate);
         this.id = aggregate.getId();
         this.readerId = aggregate.getReaderId();
         this.bookId = bookId;
-        this.isSubscribe = false;
+        this.isSubscribe = isSubscribe;
     }
-
     public SubscriptionFinished() {
         super();
     }
