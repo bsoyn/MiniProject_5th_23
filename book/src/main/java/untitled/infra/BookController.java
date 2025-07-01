@@ -1,17 +1,17 @@
 package untitled.infra;
 
-import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+
 import untitled.domain.*;
 import untitled.domain.Book.Book;
+import untitled.domain.Book.BookService;
+import untitled.domain.BookAccess.BookAccess;
+import untitled.domain.BookAccess.BookAccessService;
 import untitled.domain.BookAccess.RequestbookAuthorityCommand;
-
 //<<< Clean Arch / Inbound Adaptor
 
 @RestController
@@ -19,21 +19,27 @@ import untitled.domain.BookAccess.RequestbookAuthorityCommand;
 @Transactional
 public class BookController {
 
-    @RequestMapping(
-        value = "/books/requestbookauthority",
-        method = RequestMethod.POST,
-        produces = "application/json;charset=UTF-8"
-    )
-    public Book requestbookAuthority(
-        HttpServletRequest request,
-        HttpServletResponse response,
-        @RequestBody RequestbookAuthorityCommand requestbookAuthorityCommand
-    ) throws Exception {
-        System.out.println("##### /book/requestbookAuthority  called #####");
-
-        book.requestbookAuthority(requestbookAuthorityCommand);
-        
-        return book;
+    private final BookService bookService;
+    private final BookAccessService bookAccessService;
+    
+    public BookController(BookService bookService, BookAccessService bookAccessService){
+        this.bookService = bookService;
+        this.bookAccessService = bookAccessService;
     }
+
+    @PostMapping(value = "/authority", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String requestBookAuthority(
+        @PathVariable Long bookId,
+        @RequestBody RequestbookAuthorityCommand requestbookAuthorityCommand,
+        HttpServletRequest request,
+        HttpServletResponse response
+    ) throws Exception {
+        System.out.println("##### /books/authority called #####");
+
+        bookAccessService.requestbookAuthority(requestbookAuthorityCommand);
+        
+        return "도서 권한 요청이 처리되었습니다.";
+    }
+    
 }
 //>>> Clean Arch / Inbound Adaptor
