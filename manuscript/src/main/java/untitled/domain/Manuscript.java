@@ -31,7 +31,7 @@ public class Manuscript {
     private String title;
 
     @Lob
-    private String content;
+    private String contents;
 
     @Lob
     @Column(columnDefinition = "TEXT")
@@ -60,7 +60,7 @@ public class Manuscript {
             
             this.authorId = requestPublicationCommand.getAuthorId();
             this.title = requestPublicationCommand.getTitle();
-            this.content = requestPublicationCommand.getContent();
+            this.contents = requestPublicationCommand.getContents();
             this.status = ManuscriptStatus.SUBMITTED;
 
             repository().save(this);
@@ -75,7 +75,7 @@ public class Manuscript {
 
     //<<< Clean Arch / Port Method
     public static void alertSummaryCreated(SummaryCreated summaryCreated) {
-        repository().findById(summaryCreated.getId()).ifPresent(manuscript -> {
+        repository().findById(summaryCreated.getManuscriptId()).ifPresent(manuscript -> {
             manuscript.setSummary(summaryCreated.getSummary());
             manuscript.setCategory(summaryCreated.getCategory());
             manuscript.setPrice(summaryCreated.getPrice());
@@ -94,7 +94,7 @@ public class Manuscript {
             writingCompleted.setManuscriptId(manuscript.getId()); 
             writingCompleted.setAuthorId(manuscript.getAuthorId());
             writingCompleted.setTitle(manuscript.getTitle());
-            writingCompleted.setContent(manuscript.getContent());
+            writingCompleted.setContents(manuscript.getContents());
             writingCompleted.setImageUrl(manuscript.getImageUrl());
             writingCompleted.setSummary(manuscript.getSummary());
             writingCompleted.setCategory(manuscript.getCategory());
@@ -127,7 +127,7 @@ public class Manuscript {
     public void tempSave(TempSaveManuscriptCommand cmd) {
         this.authorId = cmd.getAuthorId();
         this.title = cmd.getTitle();
-        this.content = cmd.getContent();
+        this.contents = cmd.getContents();
         this.status = ManuscriptStatus.TEMP;
 
         repository().save(this);

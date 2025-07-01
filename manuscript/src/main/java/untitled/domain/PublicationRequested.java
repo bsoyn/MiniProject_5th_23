@@ -18,7 +18,7 @@ public class PublicationRequested extends AbstractEvent {
     private Long id;
     private Long authorId;
     private String title;
-    private String content;
+    private String contents;
     private String imageUrl;
 
     public PublicationRequested(Manuscript manuscript) {
@@ -26,7 +26,7 @@ public class PublicationRequested extends AbstractEvent {
         this.id = manuscript.getId();
         this.authorId = manuscript.getAuthorId();
         this.title = manuscript.getTitle();
-        this.content = manuscript.getContent();
+        this.contents = manuscript.getContents();
         this.imageUrl = manuscript.getImageUrl();
     }
 }

@@ -90,7 +90,7 @@ public class BookService {
     }
     
     public void summaryBook(PublicationRequested event) {
-        String manuscriptContent = event.getContent();
+        String manuscriptContent = event.getContents();
 
         String prompt =
             "다음은 사용자의 도서 원고입니다. 이 내용을 기반으로 도서 요약, 카테고리, 가격, 키워드를 생성하세요.\n" +
