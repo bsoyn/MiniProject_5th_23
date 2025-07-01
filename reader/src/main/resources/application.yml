@@ -40,7 +40,7 @@ spring:
 #>>> EDA / Topic Name
           contentType: application/json
 jwt:
-  secret: b2f52f5c3b0011a7aa99c73e3e714e8436867855efc0c24fc2a753752415fd10
+  secret: alEsuzfbMMJ3rjaiNfPnfHABuTWApPBnhfgmItTC5eOwhpDOmcqo+hdR9ztmU9dp
   access-token-validity-in-seconds: 3600
 
 logging:
