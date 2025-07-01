@@ -56,3 +56,4 @@ public class PurchasedBook {
         this.bookId = purchasebookCommand.getBookId();
         this.status = "REQUESTED";
     }
+}
