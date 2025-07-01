@@ -1,7 +1,6 @@
 package untitled.filter;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -13,17 +12,18 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Component; // ✨ 1. @Component 어노테이션 추가
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import untitled.config.JwtTokenProvider;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
-@Component
 @RequiredArgsConstructor
+@Component // ✨ 1. Spring이 이 필터를 인식하고 사용하도록 @Component를 추가합니다.
 public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -32,54 +32,60 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String authorizationHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
-        // 헤더가 없거나 Bearer 타입이 아니면, 아무것도 하지 않고 그냥 통과시킵니다.
+        // 헤더가 없거나 Bearer 타입이 아니면 다음 필터로 진행
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             return chain.filter(exchange);
         }
 
         try {
             String token = authorizationHeader.substring(7);
-            // 토큰이 유효하지 않으면, 아무것도 하지 않고 그냥 통과시킵니다.
-            if (!jwtTokenProvider.validateToken(token)) {
+            
+            // 토큰 유효성 검증
+            if (jwtTokenProvider.validateToken(token)) {
+                // 토큰이 유효하면 인증 객체 생성
+                Authentication authentication = getAuthentication(token);
+                log.info("[AuthenticationFilter] 인증 성공: User={}, Roles={}", authentication.getName(), authentication.getAuthorities());
+                
+                // ✨ 3. SecurityContext에 인증 정보 등록 (contextWrite 사용)
+                return chain.filter(exchange)
+                        .subscriberContext(ReactiveSecurityContextHolder.withAuthentication(authentication));
+            } else {
+                log.warn("[AuthenticationFilter] 유효하지 않은 토큰입니다.");
+                // 유효하지 않은 토큰은 인증 없이 다음 필터로 진행 (접근 결정은 SecurityConfig에서)
                 return chain.filter(exchange);
             }
-
-            // ✨ 토큰이 유효한 경우에만 이름표(헤더)를 붙여줍니다.
-            Authentication authentication = getAuthentication(token);
-            String userId = jwtTokenProvider.getUserIdFromToken(token);
-            String userRoles = authentication.getAuthorities().stream()
-                                             .map(Object::toString)
-                                             .collect(Collectors.joining(","));
-
-            ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                    .header("X-User-Id", userId)
-                    .header("X-User-Roles", userRoles)
-                    .build();
-            
-            return chain.filter(exchange.mutate().request(mutatedRequest).build());
-
         } catch (Exception e) {
-            // 토큰 처리 중 어떤 에러가 발생해도, 요청을 막지 않고 그냥 통과시킵니다.
+            log.error("[AuthenticationFilter] 토큰 처리 중 예외 발생", e);
+            // 예외 발생 시에도 인증 없이 다음 필터로 진행
             return chain.filter(exchange);
         }
     }
 
+    /**
+     * 토큰에서 Claims를 추출하여 Authentication 객체를 생성하는 메소드
+     */
     public Authentication getAuthentication(String token) {
         Claims claims = jwtTokenProvider.getClaimsFromToken(token);
+        
+        // ✨ 2. JWT의 "type" 클레임을 List<String>으로 받도록 수정
         List<String> roles = claims.get("type", List.class);
         if (roles == null || roles.isEmpty()) {
-            roles = List.of("USER");
+            // 역할 정보가 없으면 빈 권한 목록을 반환
+            return new UsernamePasswordAuthenticationToken(claims.getSubject(), null, Collections.emptyList());
         }
+
+        // 역할 목록을 Spring Security의 GrantedAuthority 객체로 변환
         List<SimpleGrantedAuthority> authorities = roles.stream()
-                .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
-                .map(SimpleGrantedAuthority::new)
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role)) // "ROLE_" 접두사 추가
                 .collect(Collectors.toList());
+        
         String userId = claims.getSubject();
         return new UsernamePasswordAuthenticationToken(userId, null, authorities);
     }
 
     @Override
     public int getOrder() {
-        return -1;
+        // 다른 필터보다 먼저 실행되도록 높은 우선순위를 부여합니다.
+        return -200;
     }
 }
