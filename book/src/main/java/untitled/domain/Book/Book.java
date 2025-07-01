@@ -17,6 +17,7 @@ public class Book {
 
     private Long authorId;
 
+    @Lob
     private String contents;
 
     private String summary;
@@ -30,6 +31,8 @@ public class Book {
     private Integer price;
 
     private Long views;
+
+    private Long manuscriptId;
 
 }
 //>>> DDD / Aggregate Root

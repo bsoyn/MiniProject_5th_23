@@ -7,6 +7,8 @@ import untitled.infra.AbstractEvent;
 
 @Data
 @ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class PaymentFinished extends AbstractEvent {
 
     private Long id;
@@ -14,4 +16,5 @@ public class PaymentFinished extends AbstractEvent {
     private Integer point;
     private Integer cost;
     private Boolean isCompleted;
+    private String impUid;
 }

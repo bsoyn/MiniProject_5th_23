@@ -23,6 +23,17 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>com.github.iamport</groupId>
+			<artifactId>iamport-rest-client-java</artifactId>
+			<version>0.2.21</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
@@ -43,7 +54,7 @@
 		<dependency>
 				<groupId>org.projectlombok</groupId>
 				<artifactId>lombok</artifactId>
-				<version>1.18.12</version>
+				<version>1.18.32</version>
 				<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -108,8 +119,19 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
+			<dependency>
+				<groupId>io.github.cdimascio</groupId>
+				<artifactId>java-dotenv</artifactId>
+				<version>5.2.2</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
+	<repositories>
+		<repository>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
+		</repository>
+	</repositories>
 
 	<build>
 		<plugins>
