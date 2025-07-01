@@ -57,15 +57,15 @@ public class PolicyHandler {
 
     @StreamListener(
         value = KafkaProcessor.INPUT,
-        condition = "headers['type']=='BoolAccessRequested'"
+        condition = "headers['type']=='BookAccessRequested'"
     )
-    public void wheneverBoolAccessRequested_SubscriptionValidCheck(
-        @Payload BoolAccessRequested boolAccessRequested
+    public void wheneverBookAccessRequested_SubscriptionValidCheck(
+        @Payload BookAccessRequested bookAccessRequested
     ) {
-        BoolAccessRequested event = boolAccessRequested;
+        BookAccessRequested event = bookAccessRequested;
         System.out.println(
             "\n\n##### listener SubscriptionValidCheck : " +
-            boolAccessRequested +
+            bookAccessRequested +
             "\n\n"
         );
 
