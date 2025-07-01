@@ -114,6 +114,9 @@ public class Manuscript {
             bookRegistered +
             "\n\n"
              );
+
+            manuscript.setStatus(ManuscriptStatus.REGISTERED); 
+
             repository().save(manuscript);
 
          });
