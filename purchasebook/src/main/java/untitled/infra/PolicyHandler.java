@@ -11,6 +11,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import untitled.config.kafka.KafkaProcessor;
 import untitled.domain.*;
+import untitled.service.PurchaseService;
 
 //<<< Clean Arch / Inbound Adaptor
 @Service
@@ -18,11 +19,12 @@ import untitled.domain.*;
 public class PolicyHandler {
 
     @Autowired
-    PurchasedBookRepository purchasedBookRepository;
+    PurchaseService purchaseService;
 
     @StreamListener(KafkaProcessor.INPUT)
     public void whatever(@Payload String eventString) {}
 
+    // '구매 완료 알람' policy - 포인트 BC에서 발행한 'BuyApproved' 이벤트 수신
     @StreamListener(
         value = KafkaProcessor.INPUT,
         condition = "headers['type']=='BuyApproved'"
@@ -34,11 +36,13 @@ public class PolicyHandler {
         System.out.println(
             "\n\n##### listener PurchaseFinishAlert : " + buyApproved + "\n\n"
         );
+        purchaseService.handleBuyApproved(event);
 
         // Sample Logic //
-        PurchasedBook.purchaseFinishAlert(event);
+        //PurchasedBook.purchaseFinishAlert(event);
     }
 
+    // '구매 실패 알람' policy - 포인트 BC에서 발행한 'BuyRejected' 이벤트 수신
     @StreamListener(
         value = KafkaProcessor.INPUT,
         condition = "headers['type']=='BuyRejected'"
@@ -50,9 +54,35 @@ public class PolicyHandler {
         System.out.println(
             "\n\n##### listener PurchaseFailAlert : " + buyRejected + "\n\n"
         );
+        purchaseService.handleBuyRejected(event);
 
         // Sample Logic //
-        PurchasedBook.purchaseFailAlert(event);
+        //PurchasedBook.purchaseFailAlert(event);
     }
+
+    // '구매한 도서인지 확인' policy - 도서 관리 BC에서 발행한 'BookAccessRequested' 이벤트 수신
+    @StreamListener(
+        value = KafkaProcessor.INPUT,
+        condition = "headers['type']=='BookAccessRequested'"
+    )
+    public void wheneverBookAccessRequested_CheckOwnership(@Payload BookAccessRequested event) {
+        System.out.println("\n##### listener CheckOwnership : " + event + "\n");
+
+        purchaseService.handleBookAccessRequest(event);
+    }
+
+    // '구매 유도 알림' policy - 도서 관리 BC에서 발행한 'BookAccessRejected' 이벤트 수신
+    @StreamListener(
+        value = KafkaProcessor.INPUT,
+        condition = "headers['type']=='BookAccessRejected'"
+    )
+    public void wheneverBookAccessRejected_SuggestPurchase(
+        @Payload BookAccessRejected event
+    ) {
+        System.out.println("\n##### listener SuggestPurchase : " + event + "\n");
+        
+        purchaseService.handleSuggestPurchase(event);
+    }
+
 }
 //>>> Clean Arch / Inbound Adaptor

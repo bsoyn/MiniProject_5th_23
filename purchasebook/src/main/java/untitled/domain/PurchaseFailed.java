@@ -9,21 +9,21 @@ import untitled.infra.AbstractEvent;
 //<<< DDD / Domain Event
 @Data
 @ToString
-public class PurchaseBookConfirmed extends AbstractEvent {
+public class PurchaseFailed extends AbstractEvent {
 
     private Long id;
     private Long readerId;
     private Long bookId;
 
-    public PurchaseBookConfirmed(PurchasedBook aggregate) {
-        super(aggregate);
+    public PurchaseFailed(PurchasedBook book) {
+        super(book);
 
-        this.id = aggregate.getId();
-        this.readerId = aggregate.getReaderId();
-        this.bookId = aggregate.getBookId();
+        this.id = book.getId();
+        this.readerId = book.getReaderId();
+        this.bookId = book.getBookId();
     }
 
-    public PurchaseBookConfirmed() {
+    public PurchaseFailed() {
         super();
     }
 }

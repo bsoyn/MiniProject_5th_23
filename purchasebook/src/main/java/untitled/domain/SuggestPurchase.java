@@ -1,5 +1,6 @@
 package untitled.domain;
 
+import java.time.LocalDate;
 import java.util.*;
 import lombok.*;
 import untitled.domain.*;
@@ -7,10 +8,11 @@ import untitled.infra.AbstractEvent;
 
 @Data
 @ToString
-public class BuyApproved extends AbstractEvent {
-
-    private Long id;
+public class SuggestPurchase extends AbstractEvent {
     private Long readerId;
     private Long bookId;
-    private Integer point;
+
+    public SuggestPurchase() {
+        super();
+    }
 }
