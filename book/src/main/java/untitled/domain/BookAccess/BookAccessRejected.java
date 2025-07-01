@@ -14,6 +14,9 @@ public class BookAccessRejected extends AbstractEvent {
 
     public BookAccessRejected(BookAccess aggregate) {
         super(aggregate);
+        this.id = aggregate.getId();
+        this.bookId = aggregate.getBookId();
+        this.readerId = aggregate.getReaderId();
     }
 
     public BookAccessRejected() {

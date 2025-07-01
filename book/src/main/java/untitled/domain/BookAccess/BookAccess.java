@@ -15,5 +15,9 @@ public class BookAccess {
 
     private Long readerId;
 
-    private Long isPurchased;
+    private Boolean isPurchased;
+
+    private Boolean isSubscribed;
+
+    private Boolean isPending;
 }

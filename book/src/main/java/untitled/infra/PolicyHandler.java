@@ -5,20 +5,32 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.naming.NameParser;
 import javax.naming.NameParser;
 import javax.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.StreamListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import untitled.config.kafka.KafkaProcessor;
-import untitled.domain.*;
+import untitled.domain.Book.BookService;
+import untitled.domain.Book.WritingCompleted;
+import untitled.domain.BookAccess.BookAccessService;
+import untitled.domain.BookAccess.NotParchaseBookConfirmed;
+import untitled.domain.BookAccess.PurchaseBookConfirmed;
+import untitled.domain.BookAccess.SubscriptionFinished;
+import untitled.domain.BookAccess.SubscriptionValidChecked;
 
 //<<< Clean Arch / Inbound Adaptor
 @Service
 @Transactional
 public class PolicyHandler {
 
-    @Autowired
-    BookRepository bookRepository;
+    private final BookService bookService;
+    private final BookAccessService bookAccessService;
+
+    public PolicyHandler(
+        BookService bookService,
+        BookAccessService bookAccessService) {
+        this.bookService = bookService;
+        this.bookAccessService = bookAccessService;
+    }
 
     @StreamListener(KafkaProcessor.INPUT)
     public void whatever(@Payload String eventString) {}
@@ -38,7 +50,7 @@ public class PolicyHandler {
         );
 
         // Sample Logic //
-        Book.bookAccessApproveAlert(event);
+        bookAccessService.bookAccessApproveAlert(event);
     }
 
     @StreamListener(
@@ -56,7 +68,7 @@ public class PolicyHandler {
         );
 
         // Sample Logic //
-        Book.bookAccessApproveAlert(event);
+        bookAccessService.bookAccessApproveAlert(event);
     }
 
     @StreamListener(
@@ -74,7 +86,7 @@ public class PolicyHandler {
         );
 
         // Sample Logic //
-        Book.bookAccessDeniedAlert(event);
+        bookAccessService.bookAccessDeniedAlert(event);
     }
 
     @StreamListener(
@@ -92,7 +104,7 @@ public class PolicyHandler {
         );
 
         // Sample Logic //
-        Book.bookAccessDeniedAlert(event);
+        bookAccessService.bookAccessDeniedAlert(event);
     }
 
     @StreamListener(
@@ -110,7 +122,7 @@ public class PolicyHandler {
         );
 
         // Sample Logic //
-        Book.requestBookRegistrationAlert(event);
+        bookService.requestBookRegistrationAlert(event);
     }
 }
 //>>> Clean Arch / Inbound Adaptor

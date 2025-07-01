@@ -9,19 +9,18 @@ import untitled.infra.AbstractEvent;
 public class BookAccessApproved extends AbstractEvent {
 
     private Long id;
-    private String title;
-    private Long authorId;
-    private String contents;
-    private String summary;
-    private String imageUrl;
-    private String category;
-    private Integer price;
-    private Long views;
-    private Boolean isPurchased;
+    private Long bookId;
     private Long readerId;
+    private Boolean isPurchased;
+    private Boolean isSubscribed;
 
     public BookAccessApproved(BookAccess aggregate) {
         super(aggregate);
+        this.id = aggregate.getId();
+        this.bookId = aggregate.getBookId();
+        this.readerId = aggregate.getReaderId();
+        this.isPurchased = aggregate.getIsPurchased();
+        this.isSubscribed = aggregate.getIsSubscribed();
     }
 
     public BookAccessApproved() {
