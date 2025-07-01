@@ -10,6 +10,10 @@ import untitled.infra.AbstractEvent;
 public class AuthorApproved extends AbstractEvent {
 
     private Long id;
-    private Long authorId;
+    private String email;
     private Boolean isApproval;
+
+    public AuthorApproved() {
+        super();
+    }
 }

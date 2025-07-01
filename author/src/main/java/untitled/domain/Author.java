@@ -5,6 +5,9 @@ import lombok.Data;
 import untitled.AuthorApplication;
 import untitled.domain.AuthorInfoUpdated;
 import untitled.domain.UpdateCommand;
+import untitled.domain.RegisterCommand;
+import untitled.domain.AuthorDenied;
+import untitled.domain.AuthorApproved;
 
 @Entity
 @Table(name = "Author_table")
@@ -45,25 +48,27 @@ public class Author {
         this.majorWork = registerCommand.getMajorWork();
         this.portfolio = registerCommand.getPortfolio();
         this.isApproval = false;
-
-        RegisterRequested registerRequested = new RegisterRequested(this);
-        registerRequested.publishAfterCommit();
     }
 
     public static void sendRejectAlert(AuthorDenied authorDenied) {
-        repository().findById(authorDenied.getAuthorId()).ifPresent(author -> {
-            System.out.println("Author " + author.getName() + " (ID: " + author.getId() + ") registration was denied.");
-            System.out.println("Email notification sent to: " + author.getEmail());
+        repository().findAll().forEach(author -> {
+            if (author.getEmail().equals(authorDenied.getEmail())) {
+                System.out.println("Author " + author.getName() + " (ID: " + author.getId() + ") registration was denied.");
+                System.out.println("Email notification sent to: " + author.getEmail());
+            }
         });
     }
 
     public static void updateApprovalStatus(AuthorApproved authorApproved) {
-        repository().findById(authorApproved.getAuthorId()).ifPresent(author -> {
-            author.setIsApproval(true);
-            repository().save(author);
-            
-            System.out.println("Author " + author.getName() + " (ID: " + author.getId() + ") has been approved.");
-            System.out.println("Welcome email sent to: " + author.getEmail());
+        // authorId가 제거되었으므로 이메일로 작가를 찾아서 승인 상태 업데이트
+        repository().findAll().forEach(author -> {
+            if (author.getEmail().equals(authorApproved.getEmail())) {
+                author.setIsApproval(true);
+                repository().save(author);
+                
+                System.out.println("Author " + author.getName() + " (ID: " + author.getId() + ") has been approved.");
+                System.out.println("Welcome email sent to: " + author.getEmail());
+            }
         });
     }
 
