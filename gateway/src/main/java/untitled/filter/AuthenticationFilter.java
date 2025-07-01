@@ -23,7 +23,7 @@ import untitled.config.JwtTokenProvider;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Slf4j
+@Slf4j // <-- Lombok 라이브러리가 이 어노테이션을 보고 log 객체를 만들어줍니다.
 @Component
 public class AuthenticationFilter implements GlobalFilter, Ordered {
 
@@ -37,59 +37,64 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
+        // 1. 모든 요청에 대해 로그를 찍습니다.
+        log.info(">>> [Gateway Filter] 요청 시작: {} {}", request.getMethod(), request.getURI());
 
-        List<String> whiteList = List.of("/api/auth/login", "/api/auth/register","/managerReaders");
-        String path = request.getURI().getPath();
-        if (whiteList.stream().anyMatch(path::startsWith)) {
+        String authorizationHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        // 2. 토큰이 없는 요청은 바로 다음으로 넘깁니다. 최종 결정은 SecurityConfig가 합니다.
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            log.info(">>> [Gateway Filter] 인증 헤더 없음. 다음 필터로 계속합니다.");
             return chain.filter(exchange);
         }
 
-        String authorizationHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            log.error("인증 헤더가 없거나 Bearer 타입이 아닙니다.");
-            return handleUnauthorized(exchange);
-        }
-
+        // 3. 토큰이 있는 경우, 검증을 시작합니다.
+        log.info(">>> [Gateway Filter] Authorization 헤더 발견: {}", authorizationHeader);
         String token = authorizationHeader.substring(7);
 
         try {
             if (!jwtTokenProvider.validateToken(token)) {
-                log.error("유효하지 않은 JWT 토큰입니다.");
-                return handleUnauthorized(exchange);
+                 log.error("!!! [Gateway Filter] 유효하지 않은 JWT 토큰입니다.");
+                 return handleUnauthorized(exchange, "유효하지 않은 토큰");
             }
+            log.info(">>> [Gateway Filter] 토큰 검증 성공.");
 
             Authentication authentication = getAuthentication(token);
+            log.info(">>> [Gateway Filter] 인증 객체 생성 성공: {}", authentication);
 
             String userId = jwtTokenProvider.getUserIdFromToken(token);
+            String userRoles = authentication.getAuthorities().stream()
+                                             .map(Object::toString)
+                                             .collect(Collectors.joining(","));
+            
+            log.info(">>> [Gateway Filter] 다운스트림으로 보낼 헤더 추가: X-User-Id={}, X-User-Roles={}", userId, userRoles);
             ServerHttpRequest mutatedRequest = request.mutate()
                     .header("X-User-Id", userId)
+                    .header("X-User-Roles", userRoles)
                     .build();
             
-            // ✨ 변경된 부분: .contextWrite -> .subscriberContext 로 수정
-            // 이전 버전의 Project Reactor와의 호환성을 위해 subscriberContext를 사용합니다.
-            return chain.filter(exchange.mutate().request(mutatedRequest).build())
+            ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
+            
+            return chain.filter(mutatedExchange)
                     .subscriberContext(ReactiveSecurityContextHolder.withAuthentication(authentication));
 
         } catch (JwtException | IllegalArgumentException e) {
-            log.error("JWT 토큰 처리 중 에러가 발생했습니다: {}", e.getMessage());
-            return handleUnauthorized(exchange);
+            log.error("!!! [Gateway Filter] 토큰 처리 중 예외 발생", e);
+            return handleUnauthorized(exchange, "토큰 처리 중 예외 발생");
         }
     }
 
     public Authentication getAuthentication(String token) {
+        // ... (이전과 동일)
         Claims claims = jwtTokenProvider.getClaimsFromToken(token);
-
         List<String> roles = claims.get("type", List.class);
         if (roles == null || roles.isEmpty()) {
-            roles = List.of("ROLE_USER");
+            roles = List.of("USER");
         }
-        
         List<SimpleGrantedAuthority> authorities = roles.stream()
+                .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
-
         String userId = claims.getSubject();
-        
         return new UsernamePasswordAuthenticationToken(userId, null, authorities);
     }
 
@@ -98,7 +103,8 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         return -1;
     }
 
-    private Mono<Void> handleUnauthorized(ServerWebExchange exchange) {
+    private Mono<Void> handleUnauthorized(ServerWebExchange exchange, String reason) {
+        log.error("!!! [Gateway Filter] 401 Unauthorized 처리. 이유: {}", reason);
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(HttpStatus.UNAUTHORIZED);
         return response.setComplete();

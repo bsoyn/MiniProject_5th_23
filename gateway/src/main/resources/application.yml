@@ -54,7 +54,7 @@ spring:
           predicates:
             - Path=, /availiableBookLists/**
         - id: frontend
-          uri: http://localhost:8080
+          uri: http://localhost:3000
           predicates:
             - Path=/**
 #>>> API Gateway / Routes
