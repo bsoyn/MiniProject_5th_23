@@ -12,13 +12,15 @@ import untitled.infra.AbstractEvent;
 //<<< DDD / Domain Event
 @Data
 @ToString
-@AllArgsConstructor
 public class PointPaymentRequested extends AbstractEvent {
 
     private Long id;
     private Long readerId;
     private Integer point;
     private Long bookId;
+
+    private Date subscribeStartDate;
+    private Date subscribeEndDate;
 
     public PointPaymentRequested(Point aggregate) {
         super(aggregate);

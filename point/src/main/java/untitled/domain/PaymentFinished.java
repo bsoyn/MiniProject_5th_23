@@ -7,6 +7,8 @@ import untitled.infra.AbstractEvent;
 
 @Data
 @ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class PaymentFinished extends AbstractEvent {
 
     private Long id;

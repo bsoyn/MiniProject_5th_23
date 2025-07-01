@@ -6,7 +6,6 @@ import untitled.infra.AbstractEvent;
 @Data
 @ToString
 @NoArgsConstructor
-@AllArgsConstructor
 public class PointUsageRequested extends AbstractEvent {
 
     private Long readerId;

@@ -15,6 +15,8 @@ public class BuyApproved extends AbstractEvent {
     private Long readerId;
     private Integer point;
     private Long bookId;
+    private Date subscribeStartDate;
+    private Date subscribeEndDate;
 
     public BuyApproved(Point aggregate) {
         super(aggregate);
