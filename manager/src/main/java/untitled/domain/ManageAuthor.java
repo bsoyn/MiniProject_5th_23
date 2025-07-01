@@ -16,7 +16,7 @@ public class ManageAuthor {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    private Long authorId;
+
     private Boolean isApproval;
     private String name;
     private String bio;
@@ -36,7 +36,7 @@ public class ManageAuthor {
 
     public static void registerNewAuthor(RegisterRequested registerRequested) {
         ManageAuthor manageAuthor = new ManageAuthor();
-        manageAuthor.setAuthorId(registerRequested.getId());
+
         manageAuthor.setName(registerRequested.getName());
         manageAuthor.setEmail(registerRequested.getEmail());
         manageAuthor.setBio(registerRequested.getBio());

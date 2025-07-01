@@ -10,6 +10,6 @@ import untitled.infra.AbstractEvent;
 public class AuthorDenied extends AbstractEvent {
 
     private Long id;
-    private Long authorId;
+    private String email;
     private Boolean isApproval;
 }
