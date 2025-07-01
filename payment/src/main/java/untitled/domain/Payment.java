@@ -3,21 +3,19 @@ package untitled.domain;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.siot.IamportRestClient.IamportClient;
 import com.siot.IamportRestClient.response.IamportResponse;
-import com.siot.IamportRestClient.response.PaymentResponse;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.springframework.context.ApplicationContext;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.util.Optional;
 
 import untitled.PaymentApplication;
-import untitled.domain.PaymentFailed;
-import untitled.domain.PaymentFinished;
 
 @Entity
 @Table(name = "Payment_table")
 @Data
-//<<< DDD / Aggregate Root
+@AllArgsConstructor
+@NoArgsConstructor
 public class Payment {
 
     @Id
@@ -25,27 +23,16 @@ public class Payment {
     private Long id;
 
     private Long readerId;
-
     private Integer point;
-
     private Integer cost;
-
     private Boolean isCompleted;
 
     public static PaymentRepository repository() {
-        PaymentRepository paymentRepository = PaymentApplication.applicationContext.getBean(
-            PaymentRepository.class
-        );
-        return paymentRepository;
+        return PaymentApplication.applicationContext.getBean(PaymentRepository.class);
     }
 
-    // 여기서 결제 성공하면, 완료 해서 보내고, 실패하면, 실패로 보내고..
-    //<<< Clean Arch / Port Method
-    public static void pointpayment(
-        PointPaymentRequested event
-    ) {
-        
-        // Payment 객체 생성 및 초기값 설정
+    public static void pointpayment(PointPaymentRequested event) {
+        // Payment 도메인 객체 생성
         Payment payment = new Payment();
         payment.setReaderId(event.getReaderId());
         payment.setPoint(event.getPoint());
@@ -57,9 +44,12 @@ public class Payment {
             IamportClient client = iamportService.createClient();
 
             // 결제 정보 조회
-            IamportResponse<PaymentResponse> response = client.paymentByImpUid(event.getImpUid());
+            IamportResponse<com.siot.IamportRestClient.response.Payment> response =
+                    client.paymentByImpUid(event.getImpUid());
 
-            if (response.getResponse().getAmount().intValue() == event.getCost()) {
+            com.siot.IamportRestClient.response.Payment iamportPayment = response.getResponse();
+
+            if (iamportPayment.getAmount().intValue() == event.getCost()) {
                 // 결제 성공
                 payment.setIsCompleted(true);
                 repository().save(payment);
@@ -71,6 +61,7 @@ public class Payment {
                 finished.setCost(payment.getCost());
                 finished.setIsCompleted(true);
                 finished.publishAfterCommit();
+
             } else {
                 // 금액 불일치 → 실패 처리
                 payment.setIsCompleted(false);
@@ -84,6 +75,7 @@ public class Payment {
                 failed.setIsCompleted(false);
                 failed.publishAfterCommit();
             }
+
         } catch (Exception e) {
             // 예외 발생 → 실패 처리
             payment.setIsCompleted(false);
@@ -97,9 +89,5 @@ public class Payment {
             failed.setIsCompleted(false);
             failed.publishAfterCommit();
         }
-
     }
-    //>>> Clean Arch / Port Method
-
 }
-//>>> DDD / Aggregate Root
