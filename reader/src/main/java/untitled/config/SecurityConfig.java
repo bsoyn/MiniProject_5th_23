@@ -35,12 +35,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
                 .authorizeRequests()
+                // 회원가입과 내부 통신은 누구나 허용
                 .antMatchers(HttpMethod.POST, "/managerReaders").permitAll()
                 .antMatchers("/internal/**").permitAll()
+                
+                // ✨ 핵심: 이제 reader-service가 직접 역할 검사를 수행합니다.
                 .antMatchers(HttpMethod.GET, "/managerReaders/**").hasAnyRole("READER", "ADMIN")
+                
+                // 그 외 모든 요청은 일단 인증이 필요함
                 .anyRequest().authenticated()
             .and()
-                // ✨ 핵심: 모든 요청에 대해 우리가 만든 헤더 필터를 적용합니다.
                 .addFilterBefore(authorizationHeaderFilter, UsernamePasswordAuthenticationFilter.class);
     }
 }
