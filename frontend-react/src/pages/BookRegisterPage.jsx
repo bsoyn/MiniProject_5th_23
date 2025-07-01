@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiCall, API_BASE_URL } from '../config/api';
 
 const BookRegisterPage = () => {
   const navigate = useNavigate();
@@ -14,7 +15,6 @@ const BookRegisterPage = () => {
     suggestedPrice: null,
     // 추가 정보
     description: '',
-    finalPrice: '',
     manuscriptId: null // AI 분석 후 받을 manuscript ID
   });
 
@@ -78,16 +78,12 @@ const BookRegisterPage = () => {
 
     try {
       // 1단계: AI 분석 요청 - imageUrl, category, price 생성
-      const requestResponse = await fetch('https://8088-bsoyn-miniproject5th23-bqjwtg70wjx.ws-us120.gitpod.io/manuscripts/request-publication', {
+      const requestResponse = await apiCall('/manuscripts/request-publication', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
         body: JSON.stringify({
-          authorId: 1, // 실제로는 로그인한 사용자 ID
+          authorId: 1,
           title: bookInfo.title,
-          contents: bookInfo.content // 백엔드에서 contents로 받음
+          contents: bookInfo.content
         })
       });
 
@@ -101,10 +97,8 @@ const BookRegisterPage = () => {
         
         const pollForAIResult = async () => {
           try {
-            const resultResponse = await fetch(`https://8088-bsoyn-miniproject5th23-bqjwtg70wjx.ws-us120.gitpod.io/manuscripts/${manuscriptId}`, {
-              headers: { 'Accept': 'application/json' }
-            });
-            
+            const resultResponse = await apiCall(`/manuscripts/${manuscriptId}`);
+
             if (resultResponse.ok) {
               const aiResult = await resultResponse.json();
               
@@ -193,19 +187,15 @@ const BookRegisterPage = () => {
     }
 
     try {
-      const response = await fetch('https://8088-bsoyn-miniproject5th23-bqjwtg70wjx.ws-us120.gitpod.io/manuscripts/temp-save', {
+      const response = await apiCall('/manuscripts/temp-save', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
         body: JSON.stringify({
-          manuscriptId: null, // 새로 저장하는 경우
+          manuscriptId: null,
           title: draftTitle || bookInfo.title || '제목 없음',
-          content: bookInfo.content,
-          authorId: 1 // 실제로는 로그인한 사용자 ID
+          contents: bookInfo.content,
+          authorId: 1
         })
-      });
+      }); 
 
       if (response.ok) {
         const savedManuscript = await response.json();
@@ -214,9 +204,9 @@ const BookRegisterPage = () => {
         const newDraft = {
           id: savedManuscript.id,
           title: savedManuscript.title,
-          content: savedManuscript.content,
+          content: savedManuscript.contents,
           saveDate: new Date().toISOString().split('T')[0],
-          wordCount: savedManuscript.content.length
+          wordCount: savedManuscript.contents.length
         };
 
         setSavedDrafts(prev => [newDraft, ...prev]);
@@ -233,22 +223,73 @@ const BookRegisterPage = () => {
     }
   };
 
-  // 임시 저장된 원고 불러오기
-  const loadDraft = (draft) => {
-    setBookInfo(prev => ({
-      ...prev,
-      title: draft.title,
-      content: draft.content,
-      // AI 생성 정보는 초기화
-      cover: null,
-      category: '',
-      suggestedPrice: null,
-      description: '',
-      finalPrice: ''
-    }));
-    setHasGenerated(false);
-    setActiveTab('new');
+  // 임시 저장된 원고 불러오기 (특정 원고)
+  const loadDraft = async (draft) => {
+    try {
+      // 특정 임시 저장 원고 상세 정보 가져오기
+      const response = await apiCall('/manuscripts/temp?authorId=' + draft.id);
+
+
+      if (response.ok) {
+        const draftData = await response.json();
+        
+        console.log('불러온 원고 데이터:', draftData);
+        
+        setBookInfo(prev => ({
+          ...prev,
+          title: draftData.title || draft.title,
+          content: draftData.content || draftData.contents || draft.content, // content 또는 contents 필드 확인
+          // AI 생성 정보는 초기화
+          cover: null,
+          category: '',
+          suggestedPrice: null,
+          description: '',
+          finalPrice: '',
+          manuscriptId: null
+        }));
+        setHasGenerated(false);
+        setActiveTab('new');
+        alert('원고를 불러왔습니다.');
+      } else {
+        console.error('원고 불러오기 실패:', response.status);
+        // API 실패 시 로컬 데이터 사용
+        setBookInfo(prev => ({
+          ...prev,
+          title: draft.title,
+          content: draft.content,
+          // AI 생성 정보는 초기화
+          cover: null,
+          category: '',
+          suggestedPrice: null,
+          description: '',
+          finalPrice: '',
+          manuscriptId: null
+        }));
+        setHasGenerated(false);
+        setActiveTab('new');
+        alert('원고를 불러왔습니다. (로컬 데이터 사용)');
+      }
+    } catch (error) {
+      console.error('원고 불러오기 중 오류:', error);
+      // 에러 시 로컬 데이터 사용
+      setBookInfo(prev => ({
+        ...prev,
+        title: draft.title,
+        content: draft.content,
+        // AI 생성 정보는 초기화
+        cover: null,
+        category: '',
+        suggestedPrice: null,
+        description: '',
+        finalPrice: '',
+        manuscriptId: null
+      }));
+      setHasGenerated(false);
+      setActiveTab('new');
+      alert('원고를 불러왔습니다. (로컬 데이터 사용)');
+    }
   };
+
 
   // 임시 저장된 원고 삭제
   const deleteDraft = async (draftId) => {
@@ -295,12 +336,8 @@ const BookRegisterPage = () => {
 
     try {
       // 최종 등록 API 호출 - complete-writing
-      const response = await fetch(`https://8088-bsoyn-miniproject5th23-bqjwtg70wjx.ws-us120.gitpod.io/manuscripts/${bookInfo.manuscriptId}/complete-writing`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
+      const response = await apiCall(`/manuscripts/${bookInfo.manuscriptId}/complete-writing`, {
+        method: 'POST'
       });
 
       if (response.ok) {
@@ -330,31 +367,34 @@ const BookRegisterPage = () => {
     }
   };
 
-  // 컴포넌트 마운트시 임시 저장된 원고 목록 불러오기
+  // 임시 저장 목록 불러오기 (컴포넌트 마운트시)
   useEffect(() => {
     const loadTempManuscripts = async () => {
       try {
-        const response = await fetch('https://8088-bsoyn-miniproject5th23-bqjwtg70wjx.ws-us120.gitpod.io/manuscripts/temp?authorId=1', {
-          method: 'GET',
-          headers: { 
-            'Accept': 'application/json'
-          }
-        });
+        // URL 파라미터로 authorId 전달 -> 나중에 로그인하면 고쳐야함 
+      const response = await apiCall('/manuscripts/temp?authorId=1');
 
         if (response.ok) {
           const manuscripts = await response.json();
+          console.log('불러온 임시 저장 목록:', manuscripts);
+          
           const formattedDrafts = manuscripts.map(manuscript => ({
             id: manuscript.id,
-            title: manuscript.title,
-            content: manuscript.content,
+            title: manuscript.title || '제목 없음',
+            content: (manuscript.content || manuscript.contents || '').substring(0, 150), // 목록에서는 일부만 표시
             saveDate: manuscript.createdAt ? manuscript.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
-            wordCount: manuscript.content ? manuscript.content.length : 0
+            wordCount: (manuscript.content || manuscript.contents || '').length
           }));
           setSavedDrafts(formattedDrafts);
+        } else {
+          console.error('임시 저장 목록 불러오기 실패:', response.status);
+          // 실패해도 기본 목록 유지 (빈 배열로 설정)
+          setSavedDrafts([]);
         }
       } catch (error) {
         console.error('임시 저장 목록 불러오기 실패:', error);
         // 실패해도 기본 목록 유지
+        setSavedDrafts([]);
       }
     };
 
@@ -712,42 +752,9 @@ const BookRegisterPage = () => {
                         {bookInfo.suggestedPrice?.toLocaleString()}P
                       </div>
                       <div style={{ fontSize: '0.8rem', color: '#666' }}>
-                        내용 분석 결과 적정 가격입니다
+                        내용 분석 결과 책정된 최종 가격입니다 
                       </div>
                     </div>
-                  </div>
-
-                  {/* 최종 가격 설정 */}
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '0.5rem',
-                      color: '#333',
-                      fontWeight: '500'
-                    }}>
-                      최종 판매 가격 *
-                    </label>
-                    <input
-                      type="number"
-                      name="finalPrice"
-                      value={bookInfo.finalPrice}
-                      onChange={handleInputChange}
-                      min="1000"
-                      style={{
-                        width: '100%',
-                        padding: '0.8rem',
-                        border: errors.finalPrice ? '2px solid #dc3545' : '1px solid #ddd',
-                        borderRadius: '4px',
-                        fontSize: '1rem',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                    {errors.finalPrice && (
-                      <span style={{ color: '#dc3545', fontSize: '0.8rem', marginTop: '0.3rem', display: 'block' }}>
-                        {errors.finalPrice}
-                      </span>
-                    )}
                   </div>
 
                   {/* AI 생성 설명 */}

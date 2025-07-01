@@ -5,8 +5,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage'; 
 import ReaderMyPage from './pages/ReaderMyPage'; 
 import AuthorMyPage from './pages/AuthorMyPage'; 
-import BookRegisterPage from './pages/BookRegisterPage'
-
+import BookRegisterPage from './pages/BookRegisterPage'; 
 
 function App() {
   return (
