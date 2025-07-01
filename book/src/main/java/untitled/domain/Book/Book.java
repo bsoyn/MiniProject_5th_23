@@ -17,6 +17,7 @@ public class Book {
 
     private Long authorId;
 
+    @Lob
     private String contents;
 
     private String summary;
