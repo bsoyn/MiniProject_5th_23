@@ -1,4 +1,4 @@
-package untitled.domain;
+package untitled.domain.Book;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -9,23 +9,23 @@ import untitled.infra.AbstractEvent;
 //<<< DDD / Domain Event
 @Data
 @ToString
-public class BoolAccessRequested extends AbstractEvent {
+public class BookRegistered extends AbstractEvent {
 
     private Long id;
     private String title;
     private Long authorId;
-    private File contents;
+    private String contents;
     private String summary;
-    private File image;
-    private Tags category;
-    private Float price;
-    private Long readerId;
+    private String imageUrl;
+    private String category;
+    private Integer price;
+    private Long manuscriptId;
 
-    public BoolAccessRequested(Book aggregate) {
+    public BookRegistered(Book aggregate) {
         super(aggregate);
     }
 
-    public BoolAccessRequested() {
+    public BookRegistered() {
         super();
     }
 }
