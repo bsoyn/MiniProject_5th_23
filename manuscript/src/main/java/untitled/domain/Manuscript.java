@@ -89,18 +89,6 @@ public class Manuscript {
         repository().findById(coverCreated.getManuscriptId()).ifPresent(manuscript -> {
             manuscript.setImageUrl(coverCreated.getImageUrl());
             repository().save(manuscript);
-
-            WritingCompleted writingCompleted = new WritingCompleted();
-            writingCompleted.setManuscriptId(manuscript.getId()); 
-            writingCompleted.setAuthorId(manuscript.getAuthorId());
-            writingCompleted.setTitle(manuscript.getTitle());
-            writingCompleted.setContents(manuscript.getContents());
-            writingCompleted.setImageUrl(manuscript.getImageUrl());
-            writingCompleted.setSummary(manuscript.getSummary());
-            writingCompleted.setCategory(manuscript.getCategory());
-            writingCompleted.setPrice(manuscript.getPrice());
-
-            writingCompleted.publishAfterCommit();
         });
 
     }
