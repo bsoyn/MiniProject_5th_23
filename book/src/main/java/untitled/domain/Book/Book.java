@@ -32,5 +32,7 @@ public class Book {
 
     private Long views;
 
+    private Long manuscriptId;
+
 }
 //>>> DDD / Aggregate Root
