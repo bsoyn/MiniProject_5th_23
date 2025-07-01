@@ -10,12 +10,18 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import lombok.RequiredArgsConstructor;
+
 
 @Configuration
 @EnableWebSecurity
-// @PreAuthorize 어노테이션을 사용하기 위해 추가합니다.
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+@RequiredArgsConstructor // 추가
+@EnableGlobalMethodSecurity(prePostEnabled = true) // @PreAuthorize 어노테이션 활성화를 위해 추가
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    private final AuthorizationHeaderFilter authorizationHeaderFilter; // 필터 주입
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -29,11 +35,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
                 .authorizeRequests()
-                // 회원가입과 내부 통신 경로는 누구나 접근 가능
                 .antMatchers(HttpMethod.POST, "/managerReaders").permitAll()
                 .antMatchers("/internal/**").permitAll()
-                
-                // ✨ 핵심: 그 외 모든 요청은 최소 "READER" 역할을 가져야 함
-                .anyRequest().hasAnyRole("READER", "ADMIN");
+                .antMatchers(HttpMethod.GET, "/managerReaders/**").hasAnyRole("READER", "ADMIN")
+                .anyRequest().authenticated()
+            .and()
+                // ✨ 핵심: 모든 요청에 대해 우리가 만든 헤더 필터를 적용합니다.
+                .addFilterBefore(authorizationHeaderFilter, UsernamePasswordAuthenticationFilter.class);
     }
 }
