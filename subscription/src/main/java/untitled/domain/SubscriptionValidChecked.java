@@ -16,10 +16,10 @@ public class SubscriptionValidChecked extends AbstractEvent {
     private Long bookId;
     private Boolean isSubscribe;
 
-    public SubscriptionValidChecked(Subscribe aggregate, Long bookId, Boolean isSubscribe) {
-        super(aggregate);
-        this.id = aggregate.getId();
-        this.readerId = aggregate.getReaderId();
+    public SubscriptionValidChecked(Long id, Long readerId, Long bookId, Boolean isSubscribe) {
+        super();
+        this.id = id;
+        this.readerId = readerId;
         this.bookId = bookId;
         this.isSubscribe = isSubscribe;
     }
