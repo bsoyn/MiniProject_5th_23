@@ -1,6 +1,5 @@
 package untitled.domain.Book;
 
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import untitled.infra.BookRepository;;
@@ -16,21 +15,25 @@ public class BookService {
 
     public void requestBookRegistrationAlert(WritingCompleted writingCompleted) {
 
-        Book book = new Book();
-        book.setTitle(writingCompleted.getTitle());
-        book.setAuthorId(writingCompleted.getAuthorId());
-        book.setContents(writingCompleted.getContents());
-        book.setSummary(writingCompleted.getSummary());
-        book.setImageUrl(writingCompleted.getImageUrl());
-        book.setCategory(writingCompleted.getCategory());
-        book.setPrice(writingCompleted.getPrice());
+        if(bookRepository.findByManuscriptId(writingCompleted.getManuscriptId()).isEmpty()){
+            Book book = new Book();
+            book.setTitle(writingCompleted.getTitle());
+            book.setAuthorId(writingCompleted.getAuthorId());
+            book.setContents(writingCompleted.getContents());
+            book.setSummary(writingCompleted.getSummary());
+            book.setImageUrl(writingCompleted.getImageUrl());
+            book.setCategory(writingCompleted.getCategory());
+            book.setPrice(writingCompleted.getPrice());
 
-        bookRepository.save(book);
+            bookRepository.save(book);
 
-        BookRegistered bookRegistered = new BookRegistered(book);
-        bookRegistered.setManuscriptId(writingCompleted.getManuscriptId());
+            BookRegistered bookRegistered = new BookRegistered(book);
+            bookRegistered.setManuscriptId(writingCompleted.getManuscriptId());
 
-        bookRegistered.publishAfterCommit();
+            bookRegistered.publishAfterCommit();
+        }else{
+            System.out.println("이미 출판된 책입니다.");
+        }
     }
 
 

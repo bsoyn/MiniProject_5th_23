@@ -7,6 +7,8 @@ import untitled.infra.AbstractEvent;
 
 @Data
 @ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class ReaderJoined extends AbstractEvent {
 
     private Long id;
@@ -14,4 +16,5 @@ public class ReaderJoined extends AbstractEvent {
     private String password;
     private String name;
     private Boolean isSubscribe;
+    private Boolean isKT;
 }

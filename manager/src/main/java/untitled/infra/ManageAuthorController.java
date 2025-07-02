@@ -30,6 +30,9 @@ public class ManageAuthorController {
                 AuthorApproved event = new AuthorApproved(author);
                 event.publishAfterCommit();
 
+                // 승인 후 레코드 삭제
+                manageAuthorRepository.deleteById(id);
+
                 return ResponseEntity.ok(savedAuthor);
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -51,6 +54,9 @@ public class ManageAuthorController {
 
                 AuthorDenied event = new AuthorDenied(author);
                 event.publishAfterCommit();
+
+                // 거부 후 레코드 삭제
+                manageAuthorRepository.deleteById(id);
 
                 return ResponseEntity.ok(savedAuthor);
             } else {

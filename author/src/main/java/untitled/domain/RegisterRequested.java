@@ -21,6 +21,13 @@ public class RegisterRequested extends AbstractEvent {
 
     public RegisterRequested(Author aggregate) {
         super(aggregate);
+        this.id = aggregate.getId();
+        this.email = aggregate.getEmail();
+        this.name = aggregate.getName();
+        this.bio = aggregate.getBio();
+        this.majorWork = aggregate.getMajorWork();
+        this.portfolio = aggregate.getPortfolio();
+        this.isApproval = aggregate.getIsApproval();
     }
 
     public RegisterRequested() {

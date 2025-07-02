@@ -43,7 +43,7 @@ public class ReadAuthorInfoViewHandler {
                     String.valueOf(manageAuthor.getPortfolio())
                 );
                 readAuthorInfo.setEmail(manageAuthor.getEmail());
-                readAuthorInfo.setAuthorId(manageAuthor.getAuthorId());
+                readAuthorInfo.setAuthorId(manageAuthor.getId());
                 // view 레파지 토리에 save
                 readAuthorInfoRepository.save(readAuthorInfo);
             }

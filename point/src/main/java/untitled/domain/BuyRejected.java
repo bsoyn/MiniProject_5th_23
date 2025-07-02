@@ -14,6 +14,11 @@ public class BuyRejected extends AbstractEvent {
     private Long id;
     private Long readerId;
     private Integer point;
+    private Long bookId;
+
+    private Date subscribeStartDate;
+    private Date subscribeEndDate;
+    private String reason;
 
     public BuyRejected(Point aggregate) {
         super(aggregate);

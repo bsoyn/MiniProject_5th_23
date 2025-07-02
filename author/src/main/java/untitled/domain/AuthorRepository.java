@@ -11,4 +11,8 @@ import untitled.domain.*;
 //<<< PoEAA / Repository
 @RepositoryRestResource(collectionResourceRel = "authors", path = "authors")
 public interface AuthorRepository
-    extends PagingAndSortingRepository<Author, Long> {}
+    extends PagingAndSortingRepository<Author, Long> {
+    
+    // 승인받은 작가만 조회
+    Iterable<Author> findByIsApprovalTrue();
+}
