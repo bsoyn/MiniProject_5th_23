@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
   const [userType, setUserType] = useState('READER'); // 'reader' or 'author'
   const [formData, setFormData] = useState({
     name: '',
@@ -145,6 +147,7 @@ const RegisterPage = () => {
         console.log('회원가입 성공:', data);
         alert('회원가입이 완료되었습니다.');
         // 로그인 페이지로 이동 또는 자동 로그인 처리
+        navigate('/login');
       } else {
         console.error('회원가입 실패:', data);
         setErrors({ api: data.message || '회원가입에 실패했습니다.' });

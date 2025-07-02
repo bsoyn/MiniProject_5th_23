@@ -58,7 +58,6 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
-    console.log("click");
 
     // 유효성 검사
     if (!formData.email) {
@@ -107,7 +106,6 @@ const LoginPage = () => {
           alert(`${userTypeInfo[userType].label} 로그인 성공!`);
           // localStorage.setItem('token', data.token);
           sessionStorage.setItem('accessToken', data.accessToken);
-          console.log(data.accessToken);
         }
         else{
           console.error('로그인 실패:',data);
