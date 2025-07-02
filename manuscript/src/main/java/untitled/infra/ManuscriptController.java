@@ -31,7 +31,7 @@ public class ManuscriptController {
     ManuscriptRepository manuscriptRepository;
 
     @RequestMapping(
-        value = "/manuscripts/request-publication",
+        value = "/manuscripts/",
         method = RequestMethod.POST,
         produces = "application/json;charset=UTF-8"
     )

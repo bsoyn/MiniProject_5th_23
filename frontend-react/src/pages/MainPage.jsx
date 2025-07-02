@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { purchaseBook } from '../purchase_api/purchasebook';
 
 const MainPage = () => {
     const navigate = useNavigate();
@@ -22,6 +23,21 @@ const MainPage = () => {
     book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     book.author.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handlePurchase = async (bookId) => {
+    if (!user || user.type !== 'reader') {
+      alert('구매하려면 먼저 독자로 로그인하세요.');
+      return;
+    }
+
+    try {
+      const result = await purchaseBook(1, bookId); // 테스트용 readerId
+      alert(`구매 성공: ${result.status}`);
+    } catch (error) {
+      console.error(error);
+      alert('구매에 실패했습니다.');
+    }
+  };
 
   return (
     <div style={{ 
@@ -336,15 +352,18 @@ const MainPage = () => {
                   }}>
                     {book.price.toLocaleString()}P
                   </span>
-                  <button style={{
-                    backgroundColor: '#333',
-                    color: '#fff',
-                    border: 'none',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem'
-                  }}>
+                  <button 
+                    onClick={() => handlePurchase(book.id)}
+                    style={{
+                      backgroundColor: '#333',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem'
+                    }}
+                  >
                     구매하기
                   </button>
                 </div>
