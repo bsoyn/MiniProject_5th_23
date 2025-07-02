@@ -15,7 +15,7 @@ public class ReaderValidationService {
     public ValidationResponse validate(String email, String password) {
         return readerRepository.findByEmail(email)
             .filter(reader -> passwordEncoder.matches(password, reader.getPassword()))
-            .map(reader -> new ValidationResponse(true, reader.getId().toString()))
-            .orElse(new ValidationResponse(false, null));
+            .map(reader -> new ValidationResponse(true, reader.getId().toString(), reader.getName()))
+            .orElse(new ValidationResponse(false, null, null));
     }
 }
