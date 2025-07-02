@@ -6,12 +6,12 @@ import javax.transaction.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.MediaType;
 
-import untitled.domain.Book.Book;
 import untitled.domain.Book.BookService;
-import untitled.domain.BookAccess.BookAccess;
 import untitled.domain.BookAccess.BookAccessService;
 import untitled.domain.BookAccess.RequestbookAuthorityCommand;
 //<<< Clean Arch / Inbound Adaptor
+import org.springframework.web.bind.annotation.GetMapping;
+
 
 @RestController
 @RequestMapping(value="/books")
@@ -26,9 +26,21 @@ public class BookController {
         this.bookAccessService = bookAccessService;
     }
 
+    
+    @GetMapping("/{id}")
+    public BookInfo getBookInfo(@PathVariable Long bookId){
+
+        return bookService.getBookInfo(bookId);
+    }
+
+    @GetMapping("/page/{pageNum}")
+    public BookInfoList getBookInfoList(@PathVariable int pageNum){
+
+        return bookService.getBookInfoList(pageNum);
+    }
+
     @PostMapping(value = "/authority", produces = MediaType.APPLICATION_JSON_VALUE)
     public String requestBookAuthority(
-        @PathVariable Long bookId,
         @RequestBody RequestbookAuthorityCommand requestbookAuthorityCommand,
         HttpServletRequest request,
         HttpServletResponse response
@@ -39,6 +51,8 @@ public class BookController {
         
         return "도서 권한 요청이 처리되었습니다.";
     }
+
+    
     
 }
 //>>> Clean Arch / Inbound Adaptor
