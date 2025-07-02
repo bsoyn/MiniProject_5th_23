@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 const RegisterPage = () => {
-  const [userType, setUserType] = useState('reader'); // 'reader' or 'author'
+  const [userType, setUserType] = useState('READER'); // 'reader' or 'author'
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -13,28 +13,32 @@ const RegisterPage = () => {
     portfolio: null
   });
 
+  const [isKtMember, setIsKtMember] = useState(false);
+
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    
+    const { name, value, type, checked, files } = e.target;
+
     if (name === 'portfolio') {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: files[0]
+        [name]: files[0],
       }));
+    } else if (type === 'checkbox') {
+      setIsKtMember(checked);
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
-    
+
     // 에러 메시지 제거
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: '',
       }));
     }
   };
@@ -50,6 +54,7 @@ const RegisterPage = () => {
       representative_work: '',
       portfolio: null
     });
+    console.log(type);
     setErrors({});
   };
 
@@ -78,7 +83,7 @@ const RegisterPage = () => {
       newErrors.confirmPassword = '비밀번호가 일치하지 않습니다';
     }
 
-    if (userType === 'author') {
+    if (userType === 'AUTHOR') {
       if (!formData.introduction.trim()) {
         newErrors.introduction = '자기소개를 입력해주세요';
       }
@@ -95,7 +100,7 @@ const RegisterPage = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validateForm();
 
@@ -104,8 +109,50 @@ const RegisterPage = () => {
       return;
     }
 
-    // 회원가입 로직
-    console.log('회원가입 시도:', { userType, ...formData });
+    let endpoint = '';
+    let body = {};
+
+    if (userType === 'READER') {
+      endpoint = '/managerReaders';
+      body = JSON.stringify({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        isKT: isKtMember,
+      });
+    } else if (userType === 'AUTHOR') {
+      endpoint = '/api/auth/register/author';
+      const authorFormData = new FormData();
+      authorFormData.append('name', formData.name);
+      authorFormData.append('email', formData.email);
+      authorFormData.append('password', formData.password);
+      authorFormData.append('introduction', formData.introduction);
+      authorFormData.append('representativeWork', formData.representative_work);
+      authorFormData.append('portfolio', formData.portfolio);
+      body = authorFormData;
+    }
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: userType === 'READER' ? { 'Content-Type': 'application/json' } : {},
+        body: body,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log('회원가입 성공:', data);
+        alert('회원가입이 완료되었습니다.');
+        // 로그인 페이지로 이동 또는 자동 로그인 처리
+      } else {
+        console.error('회원가입 실패:', data);
+        setErrors({ api: data.message || '회원가입에 실패했습니다.' });
+      }
+    } catch (error) {
+      console.error('회원가입 요청 오류:', error);
+      setErrors({ api: '서버와 통신 중 오류가 발생했습니다.' });
+    }
   };
 
   const inputStyle = (fieldName) => ({
@@ -166,13 +213,13 @@ const RegisterPage = () => {
           <div style={{ display: 'flex', gap: '1rem' }}>
             <button
               type="button"
-              onClick={() => handleUserTypeChange('reader')}
+              onClick={() => handleUserTypeChange('READER')}
               style={{
                 flex: 1,
                 padding: '1rem',
-                border: userType === 'reader' ? '2px solid #333' : '1px solid #ddd',
+                border: userType === 'READER' ? '2px solid #333' : '1px solid #ddd',
                 borderRadius: '4px',
-                backgroundColor: userType === 'reader' ? '#f8f9fa' : '#fff',
+                backgroundColor: userType === 'READER' ? '#f8f9fa' : '#fff',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
@@ -187,13 +234,13 @@ const RegisterPage = () => {
             </button>
             <button
               type="button"
-              onClick={() => handleUserTypeChange('author')}
+              onClick={() => handleUserTypeChange('AUTHOR')}
               style={{
                 flex: 1,
                 padding: '1rem',
-                border: userType === 'author' ? '2px solid #333' : '1px solid #ddd',
+                border: userType === 'AUTHOR' ? '2px solid #333' : '1px solid #ddd',
                 borderRadius: '4px',
-                backgroundColor: userType === 'author' ? '#f8f9fa' : '#fff',
+                backgroundColor: userType === 'AUTHOR' ? '#f8f9fa' : '#fff',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
@@ -312,8 +359,35 @@ const RegisterPage = () => {
             )}
           </div>
 
+          <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center' }}>
+            <input
+              type="checkbox"
+              name="isKtMember"
+              checked={isKtMember}
+              onChange={handleChange}
+              id="kt-member-checkbox"
+              style={{
+                width: '1.2rem',
+                height: '1.2rem',
+                marginRight: '0.5rem',
+                cursor: 'pointer'
+              }}
+            />
+            <label 
+              htmlFor="kt-member-checkbox"
+              style={{
+                color: '#333',
+                fontSize: '0.9rem',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+            >
+              KT 회원입니다.
+            </label>
+          </div>
+
           {/* 작가 전용 필드 */}
-          {userType === 'author' && (
+          {userType === 'AUTHOR' && (
             <>
               <div style={{ marginBottom: '1.5rem' }}>
                 <label style={{
@@ -446,11 +520,11 @@ const RegisterPage = () => {
             onMouseOver={(e) => e.target.style.backgroundColor = '#555'}
             onMouseOut={(e) => e.target.style.backgroundColor = '#333'}
           >
-            {userType === 'author' ? '작가 등록 신청' : '회원가입'}
+            {userType === 'AUTHOR' ? '작가 등록 신청' : '회원가입'}
           </button>
 
           {/* 작가 등록 안내 */}
-          {userType === 'author' && (
+          {userType === 'AUTHOR' && (
             <div style={{
               backgroundColor: '#f8f9fa',
               padding: '1rem',
@@ -480,7 +554,7 @@ const RegisterPage = () => {
           )}
 
           {/* 독자 혜택 안내 */}
-          {userType === 'reader' && (
+          {userType === 'READER' && (
             <div style={{
               backgroundColor: '#f0f8ff',
               padding: '1rem',
