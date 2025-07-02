@@ -14,7 +14,6 @@ import untitled.domain.SubscriptionValidChecked;
 @Entity
 @Table(name = "Subscribe_table")
 @Data
-//<<< DDD / Aggregate Root
 public class Subscribe {
 
     @Id
@@ -31,21 +30,6 @@ public class Subscribe {
     public void onPostPersist() {
         PayRequested payRequested = new PayRequested(this);
         payRequested.publishAfterCommit();
-
-        // SubscriptionValidChecked subscriptionValidChecked = new SubscriptionValidChecked(
-        //     this
-        // );
-        // subscriptionValidChecked.publishAfterCommit();
-
-        // SubscriptionFinished subscriptionFinished = new SubscriptionFinished(
-        //     this
-        // );
-        // subscriptionFinished.publishAfterCommit();
-        
-        // SubscriptionCompleted subscriptionCompleted = new SubscriptionCompleted(
-        //     this
-        // );
-        // subscriptionCompleted.publishAfterCommit();
     }
 
     public static SubscribeRepository repository() {
@@ -55,7 +39,6 @@ public class Subscribe {
         return subscribeRepository;
     }
 
-    //<<< Clean Arch / Port Method
     public static void subscribeFinish(BuyApproved buyApproved) {
         Subscribe subscribe = new Subscribe();
         subscribe.setReaderId(buyApproved.getReaderId());
@@ -69,35 +52,8 @@ public class Subscribe {
         event.setSubscribeStartDate(subscribe.getSubscribeStartDate());
         event.setSubscribeEndDate(subscribe.getSubscribeEndDate());
         event.publishAfterCommit();
-
-        //implement business logic here:
-
-        /** Example 1:  new item 
-        Subscribe subscribe = new Subscribe();
-        repository().save(subscribe);
-
-        SubscriptionCompleted subscriptionCompleted = new SubscriptionCompleted(subscribe);
-        subscriptionCompleted.publishAfterCommit();
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(buyApproved.get???()).ifPresent(subscribe->{
-            
-            subscribe // do something
-            repository().save(subscribe);
-
-            SubscriptionCompleted subscriptionCompleted = new SubscriptionCompleted(subscribe);
-            subscriptionCompleted.publishAfterCommit();
-
-         });
-        */
-
     }
 
-    //>>> Clean Arch / Port Method
-    //<<< Clean Arch / Port Method
     public static void subscribeFailAlert(BuyRejected buyRejected) {
         SubscriptionFailed event = new SubscriptionFailed();
         event.setReaderId(buyRejected.getReaderId());
@@ -106,32 +62,8 @@ public class Subscribe {
         event.publishAfterCommit();
 
         System.out.println("구독 실패 알림 이벤트 전송 완료: " + event);
-        
-        
-        //implement business logic here:
-
-        /** Example 1:  new item 
-        Subscribe subscribe = new Subscribe();
-        repository().save(subscribe);
-
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(buyRejected.get???()).ifPresent(subscribe->{
-            
-            subscribe // do something
-            repository().save(subscribe);
-
-
-         });
-        */
 
     }
-
-    //>>> Clean Arch / Port Method
-    //<<< Clean Arch / Port Method
     public static void subscriptionValidCheck(
         BookAccessRequested bookAccessRequested
     ) {
@@ -143,17 +75,12 @@ public class Subscribe {
         if (optional.isPresent()) {
             Subscribe subscribe = optional.get();
 
-            if (subscribe.getSubscribeEndDate().isAfter(LocalDate.now())) {
-                SubscriptionValidChecked event = new SubscriptionValidChecked();
-                event.setReaderId(readerId);
-                event.setBookId(bookId);
-                event.setIsSubscribe(true);
+            if (subscribe.getSubscribeEndDate() != null &&
+                subscribe.getSubscribeEndDate().isAfter(LocalDate.now())) {
+                SubscriptionValidChecked event = new SubscriptionValidChecked(subscribe, bookId, true);
                 event.publishAfterCommit();
             } else {
-                SubscriptionFinished event = new SubscriptionFinished();
-                event.setReaderId(readerId);
-                event.setBookId(bookId);
-                event.setIsSubscribe(false);
+                SubscriptionFinished event = new SubscriptionFinished(subscribe, bookId, false);
                 event.publishAfterCommit();
             }
         } else {
@@ -163,37 +90,5 @@ public class Subscribe {
             event.setIsSubscribe(false);
             event.publishAfterCommit();
         }
-
-        //implement business logic here:
-
-        /** Example 1:  new item 
-        Subscribe subscribe = new Subscribe();
-        repository().save(subscribe);
-
-        SubscriptionValidChecked subscriptionValidChecked = new SubscriptionValidChecked(subscribe);
-        subscriptionValidChecked.publishAfterCommit();
-        SubscriptionFinished subscriptionFinished = new SubscriptionFinished(subscribe);
-        subscriptionFinished.publishAfterCommit();
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(boolAccessRequested.get???()).ifPresent(subscribe->{
-            
-            subscribe // do something
-            repository().save(subscribe);
-
-            SubscriptionValidChecked subscriptionValidChecked = new SubscriptionValidChecked(subscribe);
-            subscriptionValidChecked.publishAfterCommit();
-            SubscriptionFinished subscriptionFinished = new SubscriptionFinished(subscribe);
-            subscriptionFinished.publishAfterCommit();
-
-         });
-        */
-
     }
-    //>>> Clean Arch / Port Method
-
 }
-//>>> DDD / Aggregate Root
