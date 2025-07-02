@@ -53,10 +53,10 @@ public class ManuscriptService {
     }
 
 
-    public Manuscript completeWriting(Long manuscriptId) {
+    public Manuscript completeWriting(Long manuscriptId, String penName) {
         return manuscriptRepository.findById(manuscriptId)
             .map(manuscript -> {
-                WritingCompleted event = new WritingCompleted(manuscript); 
+                WritingCompleted event = new WritingCompleted(manuscript, penName); 
                 event.publishAfterCommit(); 
                 return manuscript;
             })

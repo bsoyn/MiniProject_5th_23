@@ -3,10 +3,10 @@ package untitled.controller;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
+
+import org.hibernate.mapping.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import untitled.domain.aggregate.*;
 import untitled.dto.*; 
@@ -43,10 +43,10 @@ public class ManuscriptController {
         return manuscriptService.saveOrUpdateManuscript(dto);
     }
 
-    @PostMapping("/manuscripts/{id}/complete-writing")
-    public Manuscript completeWriting(@PathVariable Long id) {
-        return manuscriptService.completeWriting(id); 
-    }
+@PostMapping("/manuscripts/{id}/complete-writing")
+public Manuscript completeWriting(@PathVariable Long id, @RequestParam String penName) {
+    return manuscriptService.completeWriting(id, penName); 
+}
 
 
     @PostMapping("/manuscripts/temp-save")

@@ -9,6 +9,7 @@ const BookRegisterPage = () => {
   const [bookInfo, setBookInfo] = useState({
     title: '',
     content: '',
+    penName: '', // 필명 추가
     // AI가 생성할 정보들
     cover: null,
     category: '',
@@ -65,10 +66,11 @@ const BookRegisterPage = () => {
 
   // AI 분석 및 생성 함수
   const generateAIContent = async () => {
-    if (!bookInfo.title.trim() || !bookInfo.content.trim()) {
+    if (!bookInfo.title.trim() || !bookInfo.content.trim() || !bookInfo.penName.trim()) {
       setErrors({
         title: !bookInfo.title.trim() ? '제목을 입력해주세요' : '',
-        content: !bookInfo.content.trim() ? '내용을 입력해주세요' : ''
+        content: !bookInfo.content.trim() ? '내용을 입력해주세요' : '',
+        penName: !bookInfo.penName.trim() ? '필명을 입력해주세요' : ''
       });
       return;
     }
@@ -239,6 +241,7 @@ const BookRegisterPage = () => {
           ...prev,
           title: draftData.title || draft.title,
           content: draftData.content || draftData.contents || draft.content, // content 또는 contents 필드 확인
+          penName: '', // 필명은 초기화
           // AI 생성 정보는 초기화
           cover: null,
           category: '',
@@ -257,6 +260,7 @@ const BookRegisterPage = () => {
           ...prev,
           title: draft.title,
           content: draft.content,
+          penName: '', // 필명은 초기화
           // AI 생성 정보는 초기화
           cover: null,
           category: '',
@@ -276,6 +280,7 @@ const BookRegisterPage = () => {
         ...prev,
         title: draft.title,
         content: draft.content,
+        penName: '', // 필명은 초기화
         // AI 생성 정보는 초기화
         cover: null,
         category: '',
@@ -314,6 +319,8 @@ const BookRegisterPage = () => {
 
   // 최종 도서 등록
   const submitBook = async () => {
+    console.log('submitBook 시작 - bookInfo:', bookInfo);
+    
     if (!hasGenerated) {
       alert('먼저 AI 분석을 완료해주세요.');
       return;
@@ -321,6 +328,14 @@ const BookRegisterPage = () => {
 
     if (!bookInfo.manuscriptId) {
       alert('AI 분석 결과가 없습니다. 다시 분석해주세요.');
+      return;
+    }
+
+    if (!bookInfo.penName.trim()) {
+      setErrors(prev => ({
+        ...prev,
+        penName: '필명을 입력해주세요'
+      }));
       return;
     }
 
@@ -335,18 +350,30 @@ const BookRegisterPage = () => {
     }
 
     try {
-      // 최종 등록 API 호출 - complete-writing
-      const response = await apiCall(`/manuscripts/${bookInfo.manuscriptId}/complete-writing`, {
-        method: 'POST'
+      console.log('API 호출 시작 - manuscriptId:', bookInfo.manuscriptId, 'penName:', bookInfo.penName);
+      
+
+      
+      const response = await apiCall(`/manuscripts/${bookInfo.manuscriptId}/complete-writing?penName=${bookInfo.penName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
       });
 
+      console.log('응답 상태:', response.status);
+      console.log('응답 객체:', response);
+
       if (response.ok) {
+        const result = await response.json();
+        console.log('성공 응답:', result);
         alert('도서 등록이 완료되었습니다! 관리자 검토 후 판매가 시작됩니다.');
         
         // 상태 초기화
         setBookInfo({
           title: '',
           content: '',
+          penName: '',
           cover: null,
           category: '',
           suggestedPrice: null,
@@ -358,12 +385,19 @@ const BookRegisterPage = () => {
         
         navigate('/author-mypage');
       } else {
-        const errorData = await response.text();
-        alert(`등록 실패: ${errorData || '알 수 없는 오류가 발생했습니다.'}`);
+        let errorData;
+        try {
+          errorData = await response.json();
+          console.error('오류 응답 (JSON):', errorData);
+        } catch (e) {
+          errorData = await response.text();
+          console.error('오류 응답 (Text):', errorData);
+        }
+        alert(`등록 실패 (${response.status}): ${errorData.message || errorData || '알 수 없는 오류가 발생했습니다.'}`);
       }
     } catch (error) {
       console.error('도서 등록 중 오류:', error);
-      alert('네트워크 오류가 발생했습니다. 연결을 확인해주세요.');
+      alert(`네트워크 오류가 발생했습니다: ${error.message}`);
     }
   };
 
@@ -534,6 +568,39 @@ const BookRegisterPage = () => {
                 원고 작성
               </h3>
 
+              {/* 필명 입력 */}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  color: '#333',
+                  fontWeight: '500'
+                }}>
+                  필명 *
+                </label>
+                <input
+                  type="text"
+                  name="penName"
+                  value={bookInfo.penName}
+                  onChange={handleInputChange}
+                  placeholder="작가 필명을 입력하세요"
+                  style={{
+                    width: '100%',
+                    padding: '0.8rem',
+                    border: errors.penName ? '2px solid #dc3545' : '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                {errors.penName && (
+                  <span style={{ color: '#dc3545', fontSize: '0.8rem', marginTop: '0.3rem', display: 'block' }}>
+                    {errors.penName}
+                  </span>
+                )}
+              </div>
+
               {/* 제목 입력 */}
               <div style={{ marginBottom: '1.5rem' }}>
                 <label style={{
@@ -582,7 +649,7 @@ const BookRegisterPage = () => {
                   value={bookInfo.content}
                   onChange={handleInputChange}
                   placeholder="도서 내용을 입력하세요"
-                  rows={20}
+                  rows={18}
                   style={{
                     width: '100%',
                     padding: '0.8rem',
@@ -630,7 +697,7 @@ const BookRegisterPage = () => {
                 </button>
                 <button
                   onClick={generateAIContent}
-                  disabled={isGenerating || (!bookInfo.title.trim() || !bookInfo.content.trim())}
+                  disabled={isGenerating || (!bookInfo.title.trim() || !bookInfo.content.trim() || !bookInfo.penName.trim())}
                   style={{
                     flex: 1,
                     padding: '0.8rem 1.5rem',
@@ -638,7 +705,7 @@ const BookRegisterPage = () => {
                     color: '#fff',
                     border: 'none',
                     borderRadius: '4px',
-                    cursor: isGenerating || (!bookInfo.title.trim() || !bookInfo.content.trim()) ? 'not-allowed' : 'pointer',
+                    cursor: isGenerating || (!bookInfo.title.trim() || !bookInfo.content.trim() || !bookInfo.penName.trim()) ? 'not-allowed' : 'pointer',
                     fontSize: '1rem',
                     fontWeight: '500'
                   }}
@@ -671,7 +738,7 @@ const BookRegisterPage = () => {
                   color: '#666'
                 }}>
                   <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🤖</div>
-                  <p>제목과 내용을 입력한 후<br />AI 분석을 시작해주세요</p>
+                  <p>필명, 제목, 내용을 입력한 후<br />AI 분석을 시작해주세요</p>
                 </div>
               )}
 
@@ -703,6 +770,22 @@ const BookRegisterPage = () => {
 
               {hasGenerated && (
                 <div>
+                  {/* 작가명 표시 */}
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <h4 style={{ color: '#333', marginBottom: '0.5rem' }}>작가명</h4>
+                    <div style={{
+                      padding: '0.5rem 1rem',
+                      backgroundColor: '#f8f9fa',
+                      color: '#333',
+                      borderRadius: '4px',
+                      border: '1px solid #ddd',
+                      fontSize: '1rem',
+                      fontWeight: '500'
+                    }}>
+                      {bookInfo.penName}
+                    </div>
+                  </div>
+
                   {/* 표지 이미지 */}
                   <div style={{ marginBottom: '1.5rem' }}>
                     <h4 style={{ color: '#333', marginBottom: '0.5rem' }}>AI 생성 표지</h4>
@@ -966,6 +1049,8 @@ const BookRegisterPage = () => {
                 style={{
                   width: '100%',
                   padding: '0.8rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
                   fontSize: '1rem',
                   outline: 'none',
                   boxSizing: 'border-box'

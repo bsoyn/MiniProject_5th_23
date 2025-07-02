@@ -21,9 +21,11 @@ public class WritingCompleted extends AbstractEvent {
     private String summary;
     private String category;
     private Integer price;
+    private String authorName; // 필명 필드 추가
 
-    public WritingCompleted(Manuscript aggregate) {
+    public WritingCompleted(Manuscript aggregate, String penName) {
         super(aggregate);
+        this.authorName = penName; 
     }
 
     public WritingCompleted() {
