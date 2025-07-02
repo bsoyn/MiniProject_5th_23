@@ -1,11 +1,11 @@
-// src/api/bookService.js
-import apiClient from './client'
+import apiClient from './client.js'
 
 export const bookService = {
   // 도서 목록 조회 - GET /api/books
-  getBooks: async (params = {}) => {
-    const response = await apiClient.get('/api/books', { params });
-    return response.data;
+  getBooks: async (page) => {
+    const response = await apiClient.get(`/books/page/${page}`);
+    console.log('응답:', response.books);
+    return response.books;
   },
 
   // 도서 상세 조회 - GET /api/books/:id

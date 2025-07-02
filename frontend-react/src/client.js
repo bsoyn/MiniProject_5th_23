@@ -1,7 +1,7 @@
 // src/api/client.js
 
 // API Gateway 주소
-const API_BASE_URL = process.env.REACT_APP_API_GATEWAY_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 // 기본 fetch 래퍼 클래스
 class ApiClient {

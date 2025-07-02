@@ -3,8 +3,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import untitled.domain.Book.Book;
 
+@Getter
 @AllArgsConstructor
 public class BookInfoList {
     private List<BookInfo> books;

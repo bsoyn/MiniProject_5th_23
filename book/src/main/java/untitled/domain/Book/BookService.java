@@ -26,16 +26,18 @@ public class BookService {
             Book book = new Book();
             book.setTitle(writingCompleted.getTitle());
             book.setAuthorId(writingCompleted.getAuthorId());
+            book.setAuthorName(writingCompleted.getAuthorName());
             book.setContents(writingCompleted.getContents());
             book.setSummary(writingCompleted.getSummary());
             book.setImageUrl(writingCompleted.getImageUrl());
             book.setCategory(writingCompleted.getCategory());
             book.setPrice(writingCompleted.getPrice());
+            book.setViews(0L);
+            book.setManuscriptId(writingCompleted.getManuscriptId());
 
             bookRepository.save(book);
 
             BookRegistered bookRegistered = new BookRegistered(book);
-            bookRegistered.setManuscriptId(writingCompleted.getManuscriptId());
 
             bookRegistered.publishAfterCommit();
         }else{
