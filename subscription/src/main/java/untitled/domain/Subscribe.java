@@ -84,10 +84,12 @@ public class Subscribe {
                 event.publishAfterCommit();
             }
         } else {
-            SubscriptionFinished event = new SubscriptionFinished();
-            event.setReaderId(readerId);
-            event.setBookId(bookId);
-            event.setIsSubscribe(false);
+            SubscriptionFinished event = new SubscriptionFinished(
+                bookAccessRequested.getId(),
+                readerId,
+                bookId,
+                false
+            );
             event.publishAfterCommit();
         }
     }
