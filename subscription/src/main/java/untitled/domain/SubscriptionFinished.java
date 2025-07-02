@@ -23,8 +23,12 @@ public class SubscriptionFinished extends AbstractEvent {
         this.bookId = bookId;
         this.isSubscribe = isSubscribe;
     }
-    public SubscriptionFinished() {
+    public SubscriptionFinished(Long id, Long readerId, Long bookId, Boolean isSubscribe) {
         super();
+        this.id = id;
+        this.readerId = readerId;
+        this.bookId = bookId;
+        this.isSubscribe = isSubscribe;
     }
 }
 //>>> DDD / Domain Event
