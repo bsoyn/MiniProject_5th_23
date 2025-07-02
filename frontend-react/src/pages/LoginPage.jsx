@@ -117,10 +117,11 @@ const LoginPage = () => {
             navigate('/readerMypage');
             break;
           case 'AUTHOR':
-            navigate('/author-mypage');
+            navigate('/authorMypage');
             break;
           case 'ADMIN':
-            navigate('/admin-dashboard');
+            //관리자 페이지로 이동
+            // navigate('/admin-dashboard');
             break;
           default:
             navigate('/');
