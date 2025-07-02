@@ -1,8 +1,15 @@
 package untitled.domain.Book;
 
-import org.springframework.stereotype.Service;
+import java.util.List;
 
-import untitled.infra.BookRepository;;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Pageable;
+
+import untitled.infra.BookRepository;
+import untitled.infra.BookInfo;
+import untitled.infra.BookInfoList;
 
 @Service
 public class BookService {
@@ -34,6 +41,21 @@ public class BookService {
         }else{
             System.out.println("이미 출판된 책입니다.");
         }
+    }
+
+    public BookInfo getBookInfo(Long bookId){
+        Book book = bookRepository.findById(bookId).orElseThrow();
+
+        return BookInfo.of(book);
+    }
+
+    public BookInfoList getBookInfoList(int pageNum){
+        Pageable pageable = PageRequest.of(pageNum, 10); // 10개씩
+
+        Page<Book> page = bookRepository.findAll(pageable);
+        List<Book> books = page.getContent();
+
+        return BookInfoList.of(books);
     }
 
 
