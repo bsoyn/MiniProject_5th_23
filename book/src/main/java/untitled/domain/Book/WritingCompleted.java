@@ -9,6 +9,7 @@ public class WritingCompleted extends AbstractEvent {
 
     private Long id;
     private Long authorId;
+    private String authorName;
     private String title;
     private String contents;
     private String imageUrl;
