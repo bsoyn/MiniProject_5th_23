@@ -1,10 +1,10 @@
-package untitled.domain;
+package untitled.domain.event;
 
 import java.time.LocalDate;
 import java.util.*;
 import lombok.*;
-import untitled.domain.*;
 import untitled.infra.AbstractEvent;
+import untitled.domain.aggregate.Manuscript;
 
 import java.io.*; 
 //<<< DDD / Domain Event

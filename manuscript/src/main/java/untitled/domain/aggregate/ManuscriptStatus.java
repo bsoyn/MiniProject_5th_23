@@ -1,4 +1,4 @@
-package untitled.domain;
+package untitled.domain.aggregate;
 
 public enum ManuscriptStatus {
     TEMP,

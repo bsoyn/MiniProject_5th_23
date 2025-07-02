@@ -2,9 +2,6 @@ package untitled.domain;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import untitled.domain.BookCover;
-import untitled.domain.SummaryCreated;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -20,7 +17,6 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 @Service
 public class BookService {
@@ -71,9 +67,11 @@ public class BookService {
         ObjectMapper mapper = new ObjectMapper();
 
         ObjectNode requestBody = mapper.createObjectNode();
-        requestBody.put("model", "dall-e-3");  
+        requestBody.put("model", "dall-e-3");
         requestBody.put("prompt", prompt);
         requestBody.put("size", "1024x1024");
+        requestBody.put("n", 1);  // 생성할 이미지 수
+        requestBody.put("response_format", "url"); 
 
         Request request = new Request.Builder()
             .url("https://api.openai.com/v1/images/generations")
@@ -95,7 +93,7 @@ public class BookService {
         String prompt =
             "다음은 사용자의 도서 원고입니다. 이 내용을 기반으로 도서 요약, 카테고리, 가격, 키워드를 생성하세요.\n" +
             "---\n" + manuscriptContent + "\n---\n" +
-            "요약은 3문단 이내로 제공하고, 카테고리는 한글로 하나만, 가격은 숫자로(1000~20000 범위, 단위는 포함하지 말고 수치만), 키워드는 반드시 쉼표로 구분된 문자열로 주세요 (키워드 예: 우주,별,관측,탐사,신호)\n" +
+            "요약은 3문단 이내로 제공하고, 카테고리는 한글로 ['전체', '소설', 'SF', '로맨스', '에세이', '역사', '자기계발'] 중에서 하나만 선정하고 (예: 자기계발), 가격은 숫자로(1000~20000 범위, 단위는 포함하지 말고 수치만), 키워드는 반드시 쉼표로 구분된 문자열로 주세요 (키워드 예: 우주,별,관측,탐사,신호)\n" +
             "이때 JSON을 매우 엄격하게 반환해야 하며, 절대로 마크다운 코드 블럭(```json`)을 포함하지 마세요. 반드시 순수한 JSON 텍스트만 응답하세요."  + " {\"summary\":\"...\", \"category\":\"...\", \"price\":10000, \"keywords\":\"키워드1,키워드2,...\"}";
 
         try {

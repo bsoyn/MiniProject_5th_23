@@ -93,7 +93,7 @@ const BookRegisterPage = () => {
 
         // 2단계: AI 처리 완료까지 폴링 (manuscripts/{id}로 조회)
         let attempts = 0;
-        const maxAttempts = 30; // 최대 30번 시도 (30초)
+        const maxAttempts = 60; // 최대 30번 시도 (30초)
         
         const pollForAIResult = async () => {
           try {
@@ -120,7 +120,7 @@ const BookRegisterPage = () => {
                 return true;
               } else if (attempts < maxAttempts) {
                 attempts++;
-                setTimeout(pollForAIResult, 1000); // 1초 후 재시도
+                setTimeout(pollForAIResult, 2000); // 1초 후 재시도
                 return false;
               } else {
                 throw new Error('AI 처리 시간이 초과되었습니다.');

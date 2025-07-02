@@ -1,8 +1,6 @@
-package untitled.domain;
+package untitled.domain.event;
 
-import java.util.*;
 import lombok.*;
-import untitled.domain.*;
 import untitled.infra.AbstractEvent;
 
 @Data
