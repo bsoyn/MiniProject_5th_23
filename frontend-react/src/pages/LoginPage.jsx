@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-
+  const navigate = useNavigate();
   const [userType, setUserType] = useState("READER"); // READER, AUTHOR, ADMIN
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -104,7 +105,9 @@ const LoginPage = () => {
       if(response.ok){
           console.log('로그인 성공:', data);
           alert(`${userTypeInfo[userType].label} 로그인 성공!`);
-          localStorage.setItem('token', data.token);
+          // localStorage.setItem('token', data.token);
+          sessionStorage.setItem('accessToken', data.accessToken);
+          console.log(data.accessToken);
         }
         else{
           console.error('로그인 실패:',data);
@@ -113,20 +116,16 @@ const LoginPage = () => {
         // 사용자 타입별 리다이렉트
         switch(userType) {
           case 'READER':
-            // navigate('/reader-dashboard');
-            console.log('독자 대시보드로 이동');
+            navigate('/readerMypage');
             break;
           case 'AUTHOR':
-            // navigate('/author-mypage');
-            console.log('작가 페이지로 이동');
+            navigate('/author-mypage');
             break;
           case 'ADMIN':
-            // navigate('/admin-dashboard');
-            console.log('관리자 대시보드로 이동');
+            navigate('/admin-dashboard');
             break;
           default:
-            // navigate('/');
-            console.log('홈으로 이동');
+            navigate('/');
         }
         
     } catch (error) {
