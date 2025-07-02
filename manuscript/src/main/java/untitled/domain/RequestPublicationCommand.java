@@ -6,10 +6,9 @@ import lombok.Data;
 
 @Data
 public class RequestPublicationCommand {
-
     private Long id;
     private Long authorId;
     private String title;
-    private String content;
-    private File image;
+    private String contents;
+    private String imageUrl;
 }

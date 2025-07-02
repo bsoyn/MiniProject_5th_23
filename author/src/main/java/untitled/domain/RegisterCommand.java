@@ -3,6 +3,7 @@ package untitled.domain;
 import java.time.LocalDate;
 import java.util.*;
 import lombok.Data;
+import untitled.domain.File;
 
 @Data
 public class RegisterCommand {

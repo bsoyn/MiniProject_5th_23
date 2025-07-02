@@ -1,20 +1,17 @@
 package untitled.domain;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDate;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import javax.persistence.*;
 import lombok.Data;
 import untitled.AuthorApplication;
 import untitled.domain.AuthorInfoUpdated;
+import untitled.domain.UpdateCommand;
+import untitled.domain.RegisterCommand;
+import untitled.domain.AuthorDenied;
+import untitled.domain.AuthorApproved;
 
 @Entity
 @Table(name = "Author_table")
 @Data
-//<<< DDD / Aggregate Root
 public class Author {
 
     @Id
@@ -22,11 +19,8 @@ public class Author {
     private Long id;
 
     private String email;
-
     private String name;
-
     private String bio;
-
     private String majorWork;
 
     @Embedded
@@ -47,65 +41,42 @@ public class Author {
         return authorRepository;
     }
 
-    //<<< Clean Arch / Port Method
     public void register(RegisterCommand registerCommand) {
-        //implement business logic here:
-
-        RegisterRequested registerRequested = new RegisterRequested(this);
-        registerRequested.publishAfterCommit();
+        this.email = registerCommand.getEmail();
+        this.name = registerCommand.getName();
+        this.bio = registerCommand.getBio();
+        this.majorWork = registerCommand.getMajorWork();
+        this.portfolio = registerCommand.getPortfolio();
+        this.isApproval = false;
     }
 
-    //>>> Clean Arch / Port Method
-
-    //<<< Clean Arch / Port Method
     public static void sendRejectAlert(AuthorDenied authorDenied) {
-        //implement business logic here:
-
-        /** Example 1:  new item 
-        Author author = new Author();
-        repository().save(author);
-
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(authorDenied.get???()).ifPresent(author->{
-            
-            author // do something
-            repository().save(author);
-
-
-         });
-        */
-
+        repository().findAll().forEach(author -> {
+            if (author.getEmail().equals(authorDenied.getEmail())) {
+                System.out.println("Author " + author.getName() + " (ID: " + author.getId() + ") registration was denied.");
+                System.out.println("Email notification sent to: " + author.getEmail());
+            }
+        });
     }
 
-    //>>> Clean Arch / Port Method
-    //<<< Clean Arch / Port Method
     public static void updateApprovalStatus(AuthorApproved authorApproved) {
-        //implement business logic here:
-
-        /** Example 1:  new item 
-        Author author = new Author();
-        repository().save(author);
-
-        */
-
-        /** Example 2:  finding and process
-        
-
-        repository().findById(authorApproved.get???()).ifPresent(author->{
-            
-            author // do something
-            repository().save(author);
-
-
-         });
-        */
-
+        // authorId가 제거되었으므로 이메일로 작가를 찾아서 승인 상태 업데이트
+        repository().findAll().forEach(author -> {
+            if (author.getEmail().equals(authorApproved.getEmail())) {
+                author.setIsApproval(true);
+                repository().save(author);
+                
+                System.out.println("Author " + author.getName() + " (ID: " + author.getId() + ") has been approved.");
+                System.out.println("Welcome email sent to: " + author.getEmail());
+            }
+        });
     }
-    //>>> Clean Arch / Port Method
 
+    public void updateInfo(UpdateCommand updateCommand) {
+        this.email = updateCommand.email;
+        this.name = updateCommand.name;
+        this.bio = updateCommand.bio;
+        this.majorWork = updateCommand.majorWork;
+        this.portfolio = updateCommand.portfolio;
+    }
 }
-//>>> DDD / Aggregate Root

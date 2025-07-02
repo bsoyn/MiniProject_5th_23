@@ -14,6 +14,6 @@ public class RegisterRequested extends AbstractEvent {
     private String name;
     private String bio;
     private String majorWork;
-    private Object portfolio;
+    private File portfolio;
     private Boolean isApproval;
 }

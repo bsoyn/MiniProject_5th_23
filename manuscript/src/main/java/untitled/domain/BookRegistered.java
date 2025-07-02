@@ -6,15 +6,16 @@ import untitled.domain.*;
 import untitled.infra.AbstractEvent;
 
 @Data
-@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class BookRegistered extends AbstractEvent {
-
     private Long id;
+    private Long manuscriptId; 
     private String title;
     private Long authorId;
-    private Object contents;
+    private String contents;
     private String summary;
     private String imageUrl;
-    private Object category;
+    private String category;
     private Integer price;
 }

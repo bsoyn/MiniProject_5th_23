@@ -8,10 +8,9 @@ import untitled.infra.AbstractEvent;
 @Data
 @ToString
 public class PublicationRequested extends AbstractEvent {
-
     private Long id;
     private Long authorId;
     private String title;
-    private String content;
-    private Object image;
+    private String contents;
+    private String imageUrl;
 }

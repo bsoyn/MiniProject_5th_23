@@ -11,12 +11,15 @@ import untitled.infra.AbstractEvent;
 @ToString
 public class AuthorApproved extends AbstractEvent {
 
-    private Long id;
-    private Long authorId;
+        private Long id;
+    private String email;
     private Boolean isApproval;
 
     public AuthorApproved(ManageAuthor aggregate) {
         super(aggregate);
+                this.id = aggregate.getId();
+        this.email = aggregate.getEmail();
+        this.isApproval = aggregate.getIsApproval();
     }
 
     public AuthorApproved() {

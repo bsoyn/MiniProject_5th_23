@@ -1,14 +1,16 @@
 package untitled.infra;
 
 import java.util.Optional;
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+
 import untitled.domain.*;
+import untitled.service.PurchaseService;
 
 //<<< Clean Arch / Inbound Adaptor
 
@@ -17,9 +19,13 @@ import untitled.domain.*;
 @Transactional
 public class PurchasedBookController {
 
-    @Autowired
-    PurchasedBookRepository purchasedBookRepository;
+    // @Autowired
+    // PurchasedBookRepository purchasedBookRepository;
 
+    @Autowired
+    private PurchaseService purchaseService;   
+
+    // POST: 구매 요청
     @RequestMapping(
         value = "/purchasedBooks/purchasebook",
         method = RequestMethod.POST,
@@ -31,10 +37,16 @@ public class PurchasedBookController {
         @RequestBody PurchasebookCommand purchasebookCommand
     ) throws Exception {
         System.out.println("##### /purchasedBook/purchasebook  called #####");
-        PurchasedBook purchasedBook = new PurchasedBook();
-        purchasedBook.purchasebook(purchasebookCommand);
-        purchasedBookRepository.save(purchasedBook);
-        return purchasedBook;
+
+        // 서비스에서 모든 로직 처리
+        return purchaseService.requestPurchase(purchasebookCommand);       
+    }
+
+    // GET: 독자의 전체 구매 이력 조회
+    @GetMapping("/purchasedBooks/history/{readerId}")
+    public List<PurchasedBook> getPurchaseHistory(@PathVariable Long readerId) {
+        
+        return purchaseService.getPurchaseHistory(readerId);
     }
 }
 //>>> Clean Arch / Inbound Adaptor

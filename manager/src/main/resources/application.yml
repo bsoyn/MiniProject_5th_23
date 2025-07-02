@@ -1,13 +1,9 @@
 server:
-  port: 8080
+  port: 8085
 
 spring:
   application:
     name: manager
----
-
-spring:
-  profiles: default
   jpa:
     properties:
       hibernate:
@@ -30,24 +26,16 @@ spring:
       bindings:
         event-in:
           group: manager
-#<<< EDA / Topic Name
           destination: untitled
-#>>> EDA / Topic Name
           contentType: application/json
         event-out:
-#<<< EDA / Topic Name
           destination: untitled
-#>>> EDA / Topic Name
           contentType: application/json
 
 logging:
   level:
     org.hibernate.type: trace
     org.springframework.cloud: debug
-
-
-server:
-  port: 8085
 
 ---
 
