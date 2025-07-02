@@ -34,7 +34,7 @@ spring:
           predicates:
             - Path=/purchasedBooks/**, 
         - id: subscription
-          uri: http://localhost:8088
+          uri: http://localhost:8093
           predicates:
             - Path=/subscribes/**, 
         - id: payment
@@ -54,7 +54,7 @@ spring:
           predicates:
             - Path=, /availiableBookLists/**
         - id: frontend
-          uri: http://localhost:3000 
+          uri: http://localhost:3000
           predicates:
             - Path=/**
 #>>> API Gateway / Routes
@@ -68,7 +68,9 @@ spring:
             allowedHeaders:
               - "*"
             allowCredentials: true
-
+jwt:
+  secret: alEsuzfbMMJ3rjaiNfPnfHABuTWApPBnhfgmItTC5eOwhpDOmcqo+hdR9ztmU9dp
+  access-token-validity-in-seconds: 3600
 
 ---
 

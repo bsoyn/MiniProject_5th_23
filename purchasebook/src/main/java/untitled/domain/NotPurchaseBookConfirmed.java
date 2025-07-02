@@ -15,8 +15,10 @@ public class NotPurchaseBookConfirmed extends AbstractEvent {
     private Long readerId;
     private Long bookId;
 
-    public NotPurchaseBookConfirmed(Long readerId, Long bookId) {
+    public NotPurchaseBookConfirmed(Long id, Long readerId, Long bookId) {
         super();
+
+        this.id = id;
         this.readerId = readerId;
         this.bookId = bookId;
     }

@@ -45,6 +45,7 @@ public class AbstractEvent {
                     MimeTypeUtils.APPLICATION_JSON
                 )
                 .setHeader("type", getEventType())
+                .setHeader("type", "ReaderJoined")
                 .build()
         );
     }

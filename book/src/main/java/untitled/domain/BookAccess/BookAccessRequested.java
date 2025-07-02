@@ -6,17 +6,20 @@ import untitled.infra.AbstractEvent;
 //<<< DDD / Domain Event
 @Data
 @ToString
-public class BooKAccessRequested extends AbstractEvent {
+public class BookAccessRequested extends AbstractEvent {
 
     private Long id;
     private Long bookId;
     private Long readerId;
 
-    public BooKAccessRequested(BookAccess aggregate) {
+    public BookAccessRequested(BookAccess aggregate) {
         super(aggregate);
+        this.id = aggregate.getId();
+        this.bookId = aggregate.getBookId();
+        this.readerId = aggregate.getReaderId();
     }
 
-    public BooKAccessRequested() {
+    public BookAccessRequested() {
         super();
     }
 }
