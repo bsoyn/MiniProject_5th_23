@@ -7,7 +7,7 @@ import ReaderMyPage from './pages/ReaderMyPage';
 import AuthorMyPage from './pages/AuthorMyPage'; 
 import BookListPage from './pages/BookListPage';
 import BookDetailPage from './pages/BookDetailPage';
-
+import BookRegisterPage from './pages/BookRegisterPage'; 
 
 function App() {
   return (
@@ -20,6 +20,7 @@ function App() {
         <Route path="/authorMypage" element={<AuthorMyPage />} />
         <Route path="/books" element={<BookListPage />}/>
         <Route path="/books/de" element={<BookDetailPage />}/>
+        <Route path="/bookRegister" element={<BookRegisterPage />} />
 
         {/*v페이지 추가해주기 */}
       </Routes>

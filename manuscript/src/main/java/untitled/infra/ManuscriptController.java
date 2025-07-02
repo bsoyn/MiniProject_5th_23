@@ -25,7 +25,6 @@ import java.util.List;
 
 @RestController
 @Transactional
-@CrossOrigin(origins = "*")
 public class ManuscriptController {
 
     @Autowired
@@ -62,6 +61,27 @@ public class ManuscriptController {
         Manuscript manuscript = new Manuscript();
         manuscript.requestPublication(requestPublicationCommand);
         return manuscript;
+    }
+
+    @PostMapping("/manuscripts/{id}/complete-writing")
+    public Manuscript completeWriting(@PathVariable Long id) {
+        return manuscriptRepository.findById(id)
+            .map(manuscript -> {
+                WritingCompleted writingCompleted = new WritingCompleted();
+                writingCompleted.setManuscriptId(manuscript.getId());
+                writingCompleted.setAuthorId(manuscript.getAuthorId());
+                writingCompleted.setTitle(manuscript.getTitle());
+                writingCompleted.setContents(manuscript.getContents());
+                writingCompleted.setImageUrl(manuscript.getImageUrl());
+                writingCompleted.setSummary(manuscript.getSummary());
+                writingCompleted.setCategory(manuscript.getCategory());
+                writingCompleted.setPrice(manuscript.getPrice());
+
+                writingCompleted.publishAfterCommit();
+
+                return manuscript;
+            })
+            .orElseThrow(() -> new RuntimeException("해당 ID의 원고가 존재하지 않습니다."));
     }
 
 
@@ -101,7 +121,5 @@ public class ManuscriptController {
             .filter(m -> m.getStatus() == ManuscriptStatus.TEMP)
             .orElseThrow(() -> new RuntimeException("임시 저장된 원고를 찾을 수 없습니다."));
     }
-
-
 
 }

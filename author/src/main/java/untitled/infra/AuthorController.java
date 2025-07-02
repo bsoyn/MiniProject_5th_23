@@ -25,6 +25,11 @@ public class AuthorController {
             Author author = new Author();
             author.register(registerCommand);
             Author savedAuthor = authorRepository.save(author);
+            
+            // 저장 후 이벤트 발행 (ID가 설정된 후)
+            RegisterRequested registerRequested = new RegisterRequested(savedAuthor);
+            registerRequested.publishAfterCommit();
+            
             return ResponseEntity.status(HttpStatus.CREATED).body(savedAuthor);
         } catch (Exception e) {
             System.err.println("Error creating author: " + e.getMessage());
@@ -75,7 +80,8 @@ public class AuthorController {
     @GetMapping(produces = "application/json;charset=UTF-8")
     public ResponseEntity<Iterable<Author>> getAllAuthors() {
         try {
-            Iterable<Author> authors = authorRepository.findAll();
+            // 승인받은 작가만 조회
+            Iterable<Author> authors = authorRepository.findByIsApprovalTrue();
             return ResponseEntity.ok(authors);
         } catch (Exception e) {
             System.err.println("Error retrieving authors: " + e.getMessage());
