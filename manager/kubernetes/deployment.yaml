@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: manager
-          image: "username/manager:latest"
+          image: "sbells/manager:20250703"
           ports:
             - containerPort: 8080
           readinessProbe:

@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: author
-          image: username/author:latest
+          image: sbells/author:20250703
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -58,7 +58,7 @@ spec:
     spec:
       containers:
         - name: manuscript
-          image: username/manuscript:latest
+          image: sbells/manuscript:20250703
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -98,7 +98,7 @@ spec:
     spec:
       containers:
         - name: reader
-          image: username/reader:latest
+          image: sbells/reader:20250703
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -138,7 +138,7 @@ spec:
     spec:
       containers:
         - name: manager
-          image: username/manager:latest
+          image: sbells/manager:20250703
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -178,7 +178,7 @@ spec:
     spec:
       containers:
         - name: point
-          image: username/point:latest
+          image: sbells/point:20250703
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -218,7 +218,7 @@ spec:
     spec:
       containers:
         - name: purchasebook
-          image: username/purchasebook:latest
+          image: sbells/purchasebook:20250703
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -258,7 +258,7 @@ spec:
     spec:
       containers:
         - name: subscription
-          image: username/subscription:latest
+          image: sbells/subscription:20250703
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -298,7 +298,7 @@ spec:
     spec:
       containers:
         - name: payment
-          image: username/payment:latest
+          image: sbells/payment:20250703
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -338,7 +338,7 @@ spec:
     spec:
       containers:
         - name: aiconnect
-          image: username/aiconnect:latest
+          image: sbells/aiconnect:20250703
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -378,7 +378,7 @@ spec:
     spec:
       containers:
         - name: book
-          image: username/book:latest
+          image: sbells/book:20250703
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -418,7 +418,7 @@ spec:
     spec:
       containers:
         - name: dashboard
-          image: username/dashboard:latest
+          image: sbells/dashboard:20250703
           ports:
             - containerPort: 8080
           readinessProbe:
