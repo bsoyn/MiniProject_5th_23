@@ -2,6 +2,7 @@ package untitled.domain;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.io.File;      
 import lombok.Data;
 import untitled.infra.AbstractEvent;
 
