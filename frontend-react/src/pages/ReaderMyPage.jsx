@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiCall } from '../config/api';
 
@@ -273,6 +274,8 @@ const ReaderMyPage = () => {
                 </div>
                 <h3 style={{ color: '#333', marginBottom: '0.5rem' }}>{userInfo?.name}</h3>
                 <p style={{ color: '#666', fontSize: '0.9rem' }}>{userInfo?.email}</p>
+                <h3 style={{ color: '#333', marginBottom: '0.5rem' }}>{userInfo?.name}</h3>
+                <p style={{ color: '#666', fontSize: '0.9rem' }}>{userInfo?.email}</p>
                 <p style={{ color: '#999', fontSize: '0.8rem' }}>
                   가입일: {new Date(userInfo?.joinDate).toLocaleDateString()}
                 </p>
@@ -392,10 +395,10 @@ const ReaderMyPage = () => {
                           {book.title}
                         </h4>
                         <p style={{ color: '#666', marginBottom: '0.3rem' }}>
-                          저자: {book.author}
+                          저자: {book.authorName}
                         </p>
                         <p style={{ color: '#999', fontSize: '0.8rem' }}>
-                          구매일: {new Date(book.purchaseDate).toLocaleDateString()}
+                          구매일: {new Date(book.purchasedDate).toLocaleDateString()}
                         </p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
