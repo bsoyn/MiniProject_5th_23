@@ -14,6 +14,7 @@ public class PurchaseBookRequested extends AbstractEvent {
     private Long id;
     private Long readerId;
     private Long bookId;
+    private Integer price; // 가격도 보내야 함
 
     public PurchaseBookRequested(PurchasedBook aggregate) {
         super(aggregate);
@@ -21,6 +22,7 @@ public class PurchaseBookRequested extends AbstractEvent {
         this.id = aggregate.getId();
         this.readerId = aggregate.getReaderId();
         this.bookId = aggregate.getBookId();
+        this.price = aggregate.getPrice();
     }
 
     public PurchaseBookRequested() {
