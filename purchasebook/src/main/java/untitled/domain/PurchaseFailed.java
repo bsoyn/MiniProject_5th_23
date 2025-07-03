@@ -14,6 +14,7 @@ public class PurchaseFailed extends AbstractEvent {
     private Long id;
     private Long readerId;
     private Long bookId;
+    private String status; // "REQUESTED", "COMPLETED", "FAILED"
 
     public PurchaseFailed(PurchasedBook book) {
         super(book);
@@ -21,6 +22,7 @@ public class PurchaseFailed extends AbstractEvent {
         this.id = book.getId();
         this.readerId = book.getReaderId();
         this.bookId = book.getBookId();
+        this.status = book.getStatus();
     }
 
     public PurchaseFailed() {
