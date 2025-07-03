@@ -7,9 +7,9 @@ import untitled.infra.AbstractEvent;
 
 @Data
 @ToString
-public class BuyApproved extends AbstractEvent {
+public class PointPaymentRequested extends AbstractEvent {
 
-    private Long id;
     private Long readerId;
-    private Integer point;
+    private Long bookId;
+    private Boolean purchase;
 }
