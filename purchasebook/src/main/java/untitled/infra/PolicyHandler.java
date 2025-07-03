@@ -13,7 +13,6 @@ import untitled.config.kafka.KafkaProcessor;
 import untitled.domain.*;
 import untitled.service.PurchaseService;
 
-//<<< Clean Arch / Inbound Adaptor
 @Service
 @Transactional
 public class PolicyHandler {
@@ -24,41 +23,50 @@ public class PolicyHandler {
     @StreamListener(KafkaProcessor.INPUT)
     public void whatever(@Payload String eventString) {}
 
-    // '구매 완료 알람' policy - 포인트 BC에서 발행한 'BuyApproved' 이벤트 수신
+    // 도서 구매 성공/실패 관련 policy - 포인트 BC에서 발행한 'PointPaymentRequested' 이벤트 수신
     @StreamListener(
         value = KafkaProcessor.INPUT,
-        condition = "headers['type']=='BuyApproved'"
+        condition = "headers['type']=='PointPaymentRequested'"
     )
-    public void wheneverBuyApproved_PurchaseFinishAlert(
-        @Payload BuyApproved buyApproved
+    public void wheneverPointPaymentRequested_PurchaseAlert(
+        @Payload PointPaymentRequested pointPaymentRequested
     ) {
-        BuyApproved event = buyApproved;
+        PointPaymentRequested event = pointPaymentRequested;
         System.out.println(
-            "\n\n##### listener PurchaseFinishAlert : " + buyApproved + "\n\n"
+             "\n\n##### listener PurchaseAlert : " + pointPaymentRequested + "\n\n"
         );
-        purchaseService.handleBuyApproved(event);
-
-        // Sample Logic //
-        //PurchasedBook.purchaseFinishAlert(event);
+        purchaseService.handlePointPaymentRequested(event);
     }
 
-    // '구매 실패 알람' policy - 포인트 BC에서 발행한 'BuyRejected' 이벤트 수신
-    @StreamListener(
-        value = KafkaProcessor.INPUT,
-        condition = "headers['type']=='BuyRejected'"
-    )
-    public void wheneverBuyRejected_PurchaseFailAlert(
-        @Payload BuyRejected buyRejected
-    ) {
-        BuyRejected event = buyRejected;
-        System.out.println(
-            "\n\n##### listener PurchaseFailAlert : " + buyRejected + "\n\n"
-        );
-        purchaseService.handleBuyRejected(event);
+    // // '구매 완료 알람' policy - 포인트 BC에서 발행한 'BuyApproved' 이벤트 수신
+    // @StreamListener(
+    //     value = KafkaProcessor.INPUT,
+    //     condition = "headers['type']=='BuyApproved'"
+    // )
+    // public void wheneverBuyApproved_PurchaseFinishAlert(
+    //     @Payload BuyApproved buyApproved
+    // ) {
+    //     BuyApproved event = buyApproved;
+    //     System.out.println(
+    //         "\n\n##### listener PurchaseFinishAlert : " + buyApproved + "\n\n"
+    //     );
+    //     purchaseService.handleBuyApproved(event);
+    // }
 
-        // Sample Logic //
-        //PurchasedBook.purchaseFailAlert(event);
-    }
+    // // '구매 실패 알람' policy - 포인트 BC에서 발행한 'BuyRejected' 이벤트 수신
+    // @StreamListener(
+    //     value = KafkaProcessor.INPUT,
+    //     condition = "headers['type']=='BuyRejected'"
+    // )
+    // public void wheneverBuyRejected_PurchaseFailAlert(
+    //     @Payload BuyRejected buyRejected
+    // ) {
+    //     BuyRejected event = buyRejected;
+    //     System.out.println(
+    //         "\n\n##### listener PurchaseFailAlert : " + buyRejected + "\n\n"
+    //     );
+    //     purchaseService.handleBuyRejected(event);
+    // }
 
     // '구매한 도서인지 확인' policy - 도서 관리 BC에서 발행한 'BookAccessRequested' 이벤트 수신
     @StreamListener(
@@ -85,4 +93,3 @@ public class PolicyHandler {
     }
 
 }
-//>>> Clean Arch / Inbound Adaptor

@@ -2,6 +2,7 @@ package untitled.infra;
 
 import java.util.Optional;
 import java.util.*;
+import lombok.RequiredArgsConstructor;    
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
@@ -16,6 +17,7 @@ import untitled.domain.*;
 
 @RestController
 @RequestMapping(value="/points")
+@CrossOrigin(origins = "*")             
 @RequiredArgsConstructor
 public class PointController {
 
@@ -30,14 +32,17 @@ public class PointController {
         Point point = pointRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Point 계정 없음"));
 
-        point.buyPoint(command);  // <- 도메인 로직 수행
+        point.buyPoint(command); 
+
+        pointRepository.save(point);  // 저장 확정
 
         pointRepository.save(point);  // 저장 확정
 
         return ResponseEntity.ok(Map.of(
             "readerId", point.getReaderId(),
-            "requestedPoint", command.getPoint(),
-            "status", "REQUESTED"
+            "chargedPoint", command.getPoint(),
+            "totalPoint", point.getPoint(),
+            "status", "CHARGED"
         ));
     }
 
