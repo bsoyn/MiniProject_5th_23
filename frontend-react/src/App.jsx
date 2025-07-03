@@ -9,6 +9,7 @@ import BookListPage from './pages/BookListPage';
 import BookDetailPage from './pages/BookDetailPage';
 import BookRegisterPage from './pages/BookRegisterPage'; 
 import BookPurchasePage from './pages/BookPurchasePage';
+import AdminPage from './pages/AdminPage';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/bookListPage" element={<BookListPage />}/>
         <Route path="/books/de" element={<BookDetailPage />}/>
         <Route path="/bookRegister" element={<BookRegisterPage />} />
+        <Route path="/admin" element={<AdminPage />} />
         <Route path="/bookPurchase" element={<BookPurchasePage />} />
 
         {/*v페이지 추가해주기 */}

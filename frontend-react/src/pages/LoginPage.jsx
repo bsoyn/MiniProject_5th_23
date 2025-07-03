@@ -11,6 +11,9 @@ const LoginPage = () => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
+  const ADMIN_EMAIL = 'admin@bookhub.com';
+  const ADMIN_PASSWORD = 'admin123';
+
   // 사용자 유형별 정보
   const userTypeInfo = {
     READER: {
@@ -80,6 +83,21 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
+      if (userType === 'ADMIN') {
+        if (
+          formData.email === ADMIN_EMAIL &&
+          formData.password === ADMIN_PASSWORD
+        ) {
+          alert('관리자 로그인 성공!');
+          sessionStorage.setItem('accessToken', 'admin-token');
+          navigate('/admin'); // 관리자 페이지로 이동
+          return;
+        } else {
+          setErrors({ general: '관리자 계정 정보가 올바르지 않습니다.' });
+          setIsLoading(false);
+          return;
+        }
+      }
       // API 호출용 데이터 준비
       const loginData = {
         email: formData.email,
