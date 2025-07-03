@@ -17,5 +17,4 @@ public class WritingCompleted extends AbstractEvent {
     private String category;
     private Integer price;
     private Long manuscriptId;
-    
 }

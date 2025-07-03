@@ -1,4 +1,4 @@
-package untitled.infra;
+package untitled.messaging;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,8 +9,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.StreamListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
-import untitled.config.kafka.KafkaProcessor;
-import untitled.domain.*;
+
+import untitled.config.kafka.*;
+import untitled.service.*; 
+import untitled.controller.*; 
+import untitled.domain.event.SummaryCreated;
+import untitled.domain.event.CoverCreated;
+import untitled.domain.event.BookRegistered;
+import untitled.domain.event.WritingCompleted;
+
 
 //<<< Clean Arch / Inbound Adaptor
 @Service
@@ -18,7 +25,7 @@ import untitled.domain.*;
 public class PolicyHandler {
 
     @Autowired
-    ManuscriptRepository manuscriptRepository;
+    private ManuscriptService manuscriptService;
 
     @StreamListener(KafkaProcessor.INPUT)
     public void whatever(@Payload String eventString) {}
@@ -37,8 +44,7 @@ public class PolicyHandler {
             "\n\n"
         );
 
-        // Sample Logic //
-        Manuscript.alertSummaryCreated(event);
+        manuscriptService.applySummaryCreated(summaryCreated);
     }
 
     @StreamListener(
@@ -53,7 +59,7 @@ public class PolicyHandler {
             "\n\n##### listener AlertCoverCreated : " + coverCreated + "\n\n"
         );
 
-        Manuscript.alertCoverCreated(event);
+        manuscriptService.applyCoverCreated(coverCreated);
     }
 
     @StreamListener(
@@ -70,8 +76,7 @@ public class PolicyHandler {
             "\n\n"
         );
 
-        // Sample Logic //
-        Manuscript.alertBookRegistration(event);
+        manuscriptService.applyBookRegistered(bookRegistered);
     }
 
     
