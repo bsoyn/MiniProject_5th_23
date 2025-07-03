@@ -7,9 +7,10 @@ import untitled.infra.AbstractEvent;
 
 @Data
 @ToString
-public class BookAccessRequested extends AbstractEvent {
+public class PointPaymentRequested extends AbstractEvent {
 
-    private Long id;
+    // private Long id;
     private Long readerId;
     private Long bookId;
+    private boolean purchase;
 }
