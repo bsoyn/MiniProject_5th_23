@@ -203,7 +203,7 @@ const ReaderMyPage = () => {
           </h1>
           <nav style={{ display: 'flex', gap: '1rem' }}>
             <button
-              onClick={() => navigate('/books')}
+              onClick={() => navigate('/bookListPage')}
               style={{
                 padding: '0.5rem 1rem',
                 backgroundColor: 'transparent',
@@ -273,9 +273,6 @@ const ReaderMyPage = () => {
                 </div>
                 <h3 style={{ color: '#333', marginBottom: '0.5rem' }}>{userInfo?.name}</h3>
                 <p style={{ color: '#666', fontSize: '0.9rem' }}>{userInfo?.email}</p>
-                <p style={{ color: '#999', fontSize: '0.8rem' }}>
-                  가입일: {new Date(userInfo?.joinDate).toLocaleDateString()}
-                </p>
               </div>
             </div>
 
