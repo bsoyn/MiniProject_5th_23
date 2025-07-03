@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiCall, API_BASE_URL } from '../config/api';
+import apiClient from '../client.js';
 
 const BookRegisterPage = () => {
   const navigate = useNavigate();
+  
+  // 사용자 정보 상태
+  const [userInfo, setUserInfo] = useState({
+    userId: null,
+    userName: null,
+    isLoading: true
+  });
   
   // 도서 정보 상태
   const [bookInfo, setBookInfo] = useState({
@@ -20,22 +27,7 @@ const BookRegisterPage = () => {
   });
 
   // 임시 저장된 원고 목록
-  const [savedDrafts, setSavedDrafts] = useState([
-    {
-      id: 1,
-      title: '미완성 소설 초안',
-      content: '어느 날 갑자기 시간이 멈췄다. 사람들은 모두 정지된 채로...',
-      saveDate: '2025-06-25',
-      wordCount: 1250
-    },
-    {
-      id: 2,
-      title: '에세이 모음',
-      content: '일상에서 발견하는 작은 기쁨들에 대한 이야기.',
-      saveDate: '2025-06-20',
-      wordCount: 800
-    }
-  ]);
+  const [savedDrafts, setSavedDrafts] = useState([]);
 
   // UI 상태
   const [activeTab, setActiveTab] = useState('new'); // 'new' or 'drafts'
@@ -46,6 +38,48 @@ const BookRegisterPage = () => {
   const [draftTitle, setDraftTitle] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [draftToDelete, setDraftToDelete] = useState(null);
+
+  // 토큰에서 사용자 정보 가져오기
+  const fetchUserInfo = async () => {
+    try {
+      const accessToken = sessionStorage.getItem('accessToken');
+      
+      if (!accessToken) {
+        alert('로그인이 필요합니다.');
+        navigate('/login');
+        return;
+      }
+
+      const response = await apiClient.post('/api/token', {}, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+
+      setUserInfo({
+        userId: response.userId,
+        userName: response.userName,
+        isLoading: false
+      });
+
+    } catch (error) {
+      console.error('사용자 정보 가져오기 실패:', error);
+      
+      // 토큰이 유효하지 않은 경우
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        sessionStorage.removeItem('accessToken');
+        alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+        navigate('/login');
+      } else {
+        alert('사용자 정보를 가져오는데 실패했습니다.');
+        setUserInfo({
+          userId: null,
+          userName: null,
+          isLoading: false
+        });
+      }
+    }
+  };
 
   // 입력 핸들러
   const handleInputChange = (e) => {
@@ -64,14 +98,32 @@ const BookRegisterPage = () => {
     }
   };
 
+  // 폼 유효성 검사
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!bookInfo.title.trim()) {
+      newErrors.title = '제목을 입력해주세요';
+    }
+    if (!bookInfo.content.trim()) {
+      newErrors.content = '내용을 입력해주세요';
+    }
+    if (!bookInfo.penName.trim()) {
+      newErrors.penName = '필명을 입력해주세요';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   // AI 분석 및 생성 함수
   const generateAIContent = async () => {
-    if (!bookInfo.title.trim() || !bookInfo.content.trim() || !bookInfo.penName.trim()) {
-      setErrors({
-        title: !bookInfo.title.trim() ? '제목을 입력해주세요' : '',
-        content: !bookInfo.content.trim() ? '내용을 입력해주세요' : '',
-        penName: !bookInfo.penName.trim() ? '필명을 입력해주세요' : ''
-      });
+    if (!validateForm()) {
+      return;
+    }
+
+    if (!userInfo.userId) {
+      alert('사용자 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
       return;
     }
 
@@ -80,105 +132,62 @@ const BookRegisterPage = () => {
 
     try {
       // 1단계: AI 분석 요청 - imageUrl, category, price 생성
-      const requestResponse = await apiCall('/manuscripts/request-publication', {
-        method: 'POST',
-        body: JSON.stringify({
-          authorId: 1,
-          title: bookInfo.title,
-          contents: bookInfo.content
-        })
+      const manuscript = await apiClient.post('/manuscripts/request-publication', {
+        authorId: userInfo.userId,
+        title: bookInfo.title,
+        contents: bookInfo.content
       });
 
-      if (requestResponse.ok) {
-        const manuscript = await requestResponse.json();
-        const manuscriptId = manuscript.id;
+      const manuscriptId = manuscript.id;
 
-        // 2단계: AI 처리 완료까지 폴링 (manuscripts/{id}로 조회)
-        let attempts = 0;
-        const maxAttempts = 60; // 최대 30번 시도 (30초)
-        
-        const pollForAIResult = async () => {
-          try {
-            const resultResponse = await apiCall(`/manuscripts/${manuscriptId}`);
-
-            if (resultResponse.ok) {
-              const aiResult = await resultResponse.json();
-              
-              // AI 속성들이 모두 생성되었는지 확인
-              if (aiResult.imageUrl && aiResult.category && aiResult.price) {
-                // AI 결과로 상태 업데이트
-                setBookInfo(prev => ({
-                  ...prev,
-                  cover: aiResult.imageUrl,
-                  category: aiResult.category,
-                  suggestedPrice: aiResult.price,
-                  description: `"${aiResult.title}"은 ${aiResult.category} 장르의 흥미진진한 작품입니다.`, // 임시 설명
-                  finalPrice: aiResult.price?.toString() || '',
-                  manuscriptId: manuscriptId // 최종 등록시 필요
-                }));
-                
-                setHasGenerated(true);
-                setIsGenerating(false);
-                return true;
-              } else if (attempts < maxAttempts) {
-                attempts++;
-                setTimeout(pollForAIResult, 2000); // 1초 후 재시도
-                return false;
-              } else {
-                throw new Error('AI 처리 시간이 초과되었습니다.');
-              }
-            } else if (attempts < maxAttempts) {
-              attempts++;
-              setTimeout(pollForAIResult, 1000); // 1초 후 재시도
-              return false;
-            } else {
-              throw new Error('AI 처리 시간이 초과되었습니다.');
-            }
-          } catch (error) {
-            if (attempts < maxAttempts) {
-              attempts++;
-              setTimeout(pollForAIResult, 1000);
-              return false;
-            } else {
-              throw error;
-            }
+      // 2단계: AI 처리 완료까지 폴링
+      const maxAttempts = 60;
+      let attempts = 0;
+      
+      const pollForAIResult = async () => {
+        try {
+          const aiResult = await apiClient.get(`/manuscripts/${manuscriptId}`);
+          
+          // AI 속성들이 모두 생성되었는지 확인
+          if (aiResult.imageUrl && aiResult.category && aiResult.price) {
+            // AI 결과로 상태 업데이트
+            setBookInfo(prev => ({
+              ...prev,
+              cover: aiResult.imageUrl,
+              category: aiResult.category,
+              suggestedPrice: aiResult.price,
+              description: `"${aiResult.title}"은 ${aiResult.category} 장르의 흥미진진한 작품입니다.`,
+              manuscriptId: manuscriptId
+            }));
+            
+            setHasGenerated(true);
+            setIsGenerating(false);
+            return true;
+          } else if (attempts < maxAttempts) {
+            attempts++;
+            setTimeout(pollForAIResult, 2000);
+            return false;
+          } else {
+            throw new Error('AI 처리 시간이 초과되었습니다.');
           }
-        };
+        } catch (error) {
+          if (attempts < maxAttempts) {
+            attempts++;
+            setTimeout(pollForAIResult, 1000);
+            return false;
+          } else {
+            throw error;
+          }
+        }
+      };
 
-        await pollForAIResult();
-      } else {
-        const errorText = await requestResponse.text();
-        throw new Error(`AI 분석 요청 실패: ${errorText}`);
-      }
+      await pollForAIResult();
     } catch (error) {
       console.error('AI 생성 중 오류:', error);
-      alert(`AI 분석 중 오류가 발생했습니다: ${error.message}`);
+      const errorMessage = error.response?.data?.message || error.message || '알 수 없는 오류가 발생했습니다';
+      alert(`AI 분석 중 오류가 발생했습니다: ${errorMessage}`);
       setIsGenerating(false);
     }
-  };
-
-  // AI 카테고리 판단 (임시)
-  const getAICategory = (content) => {
-    const lowerContent = content.toLowerCase();
-    if (lowerContent.includes('사랑') || lowerContent.includes('연애')) return '로맨스';
-    if (lowerContent.includes('미래') || lowerContent.includes('과학')) return 'SF';
-    if (lowerContent.includes('일상') || lowerContent.includes('생활')) return '에세이';
-    if (lowerContent.includes('역사') || lowerContent.includes('옛날')) return '역사';
-    return '소설';
-  };
-
-  // AI 가격 제안 (임시)
-  const getAISuggestedPrice = (content) => {
-    const wordCount = content.length;
-    if (wordCount < 1000) return 3000;
-    if (wordCount < 5000) return 4500;
-    if (wordCount < 10000) return 6000;
-    return 7500;
-  };
-
-  // AI 설명 생성 (임시)
-  const generateAIDescription = (title, content) => {
-    return `"${title}"은 독자들에게 깊은 인상을 남길 작품입니다. ${content.substring(0, 100)}... 작가의 섬세한 문체와 흥미진진한 스토리가 어우러진 수작입니다.`;
   };
 
   // 임시 저장
@@ -188,119 +197,91 @@ const BookRegisterPage = () => {
       return;
     }
 
+    if (!userInfo.userId) {
+      alert('사용자 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
     try {
-      const response = await apiCall('/manuscripts/temp-save', {
-        method: 'POST',
-        body: JSON.stringify({
-          manuscriptId: null,
-          title: draftTitle || bookInfo.title || '제목 없음',
-          contents: bookInfo.content,
-          authorId: 1
-        })
-      }); 
+      const savedManuscript = await apiClient.post('/manuscripts/temp-save', {
+        manuscriptId: null,
+        title: draftTitle || bookInfo.title || '제목 없음',
+        contents: bookInfo.content,
+        authorId: userInfo.userId
+      });
+      
+      // 로컬 상태 업데이트
+      const newDraft = {
+        id: savedManuscript.id,
+        title: savedManuscript.title,
+        content: savedManuscript.contents,
+        saveDate: new Date().toISOString().split('T')[0],
+        wordCount: savedManuscript.contents.length
+      };
 
-      if (response.ok) {
-        const savedManuscript = await response.json();
-        
-        // 로컬 상태 업데이트
-        const newDraft = {
-          id: savedManuscript.id,
-          title: savedManuscript.title,
-          content: savedManuscript.contents,
-          saveDate: new Date().toISOString().split('T')[0],
-          wordCount: savedManuscript.contents.length
-        };
-
-        setSavedDrafts(prev => [newDraft, ...prev]);
-        setShowSaveModal(false);
-        setDraftTitle('');
-        alert('임시 저장되었습니다.');
-      } else {
-        const errorData = await response.json();
-        alert(`저장 실패: ${errorData.message || '알 수 없는 오류가 발생했습니다.'}`);
-      }
+      setSavedDrafts(prev => [newDraft, ...prev]);
+      setShowSaveModal(false);
+      setDraftTitle('');
+      alert('임시 저장되었습니다.');
     } catch (error) {
       console.error('임시 저장 중 오류:', error);
-      alert('네트워크 오류가 발생했습니다. 연결을 확인해주세요.');
+      const errorMessage = error.response?.data?.message || error.message || '알 수 없는 오류가 발생했습니다';
+      alert(`저장 실패: ${errorMessage}`);
     }
   };
 
-  // 임시 저장된 원고 불러오기 (특정 원고)
+  // 임시 저장된 원고 불러오기
   const loadDraft = async (draft) => {
     try {
       // 특정 임시 저장 원고 상세 정보 가져오기
-      const response = await apiCall('/manuscripts/temp?authorId=' + draft.id);
-
-
-      if (response.ok) {
-        const draftData = await response.json();
-        
-        console.log('불러온 원고 데이터:', draftData);
-        
-        setBookInfo(prev => ({
-          ...prev,
-          title: draftData.title || draft.title,
-          content: draftData.content || draftData.contents || draft.content, // content 또는 contents 필드 확인
-          penName: '', // 필명은 초기화
-          // AI 생성 정보는 초기화
-          cover: null,
-          category: '',
-          suggestedPrice: null,
-          description: '',
-          finalPrice: '',
-          manuscriptId: null
-        }));
-        setHasGenerated(false);
-        setActiveTab('new');
-        alert('원고를 불러왔습니다.');
-      } else {
-        console.error('원고 불러오기 실패:', response.status);
-        // API 실패 시 로컬 데이터 사용
-        setBookInfo(prev => ({
-          ...prev,
-          title: draft.title,
-          content: draft.content,
-          penName: '', // 필명은 초기화
-          // AI 생성 정보는 초기화
-          cover: null,
-          category: '',
-          suggestedPrice: null,
-          description: '',
-          finalPrice: '',
-          manuscriptId: null
-        }));
-        setHasGenerated(false);
-        setActiveTab('new');
-        alert('원고를 불러왔습니다. (로컬 데이터 사용)');
-      }
-    } catch (error) {
-      console.error('원고 불러오기 중 오류:', error);
-      // 에러 시 로컬 데이터 사용
+      const draftData = await apiClient.get(`/manuscripts/${draft.id}`);
+      
+      console.log('불러온 원고 데이터:', draftData);
+      
       setBookInfo(prev => ({
         ...prev,
-        title: draft.title,
-        content: draft.content,
-        penName: '', // 필명은 초기화
+        title: draftData.title || draft.title,
+        content: draftData.content || draftData.contents || draft.content,
+        penName: '',
         // AI 생성 정보는 초기화
         cover: null,
         category: '',
         suggestedPrice: null,
         description: '',
-        finalPrice: '',
         manuscriptId: null
       }));
+      
+      setHasGenerated(false);
+      setActiveTab('new');
+      alert('원고를 불러왔습니다.');
+    } catch (error) {
+      console.error('원고 불러오기 중 오류:', error);
+      
+      // API 실패 시 로컬 데이터 사용
+      setBookInfo(prev => ({
+        ...prev,
+        title: draft.title,
+        content: draft.content,
+        penName: '',
+        // AI 생성 정보는 초기화
+        cover: null,
+        category: '',
+        suggestedPrice: null,
+        description: '',
+        manuscriptId: null
+      }));
+      
       setHasGenerated(false);
       setActiveTab('new');
       alert('원고를 불러왔습니다. (로컬 데이터 사용)');
     }
   };
 
-
   // 임시 저장된 원고 삭제
   const deleteDraft = async (draftId) => {
     try {
-      // 백엔드에 삭제 API가 없으므로 로컬에서만 제거
       // 실제로는 DELETE /manuscripts/temp/{id} API 필요
+      // 현재는 로컬에서만 제거
       setSavedDrafts(prev => prev.filter(draft => draft.id !== draftId));
       setShowDeleteModal(false);
       setDraftToDelete(null);
@@ -339,101 +320,134 @@ const BookRegisterPage = () => {
       return;
     }
 
-    const newErrors = {};
-    if (!bookInfo.finalPrice || bookInfo.finalPrice < 1000) {
-      newErrors.finalPrice = '가격은 1000P 이상이어야 합니다';
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    if (!userInfo.userId) {
+      alert('사용자 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
       return;
     }
 
     try {
       console.log('API 호출 시작 - manuscriptId:', bookInfo.manuscriptId, 'penName:', bookInfo.penName);
       
+      // ApiClient는 자동으로 JSON 파싱하므로 별도의 응답 처리 불필요
+      const result = await apiClient.post(`/manuscripts/${bookInfo.manuscriptId}/complete-writing?penName=${bookInfo.penName}`, {});
 
+      console.log('성공 응답:', result);
+      alert('도서 등록이 완료되었습니다! 관리자 검토 후 판매가 시작됩니다.');
       
-      const response = await apiCall(`/manuscripts/${bookInfo.manuscriptId}/complete-writing?penName=${bookInfo.penName}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+      // 상태 초기화
+      setBookInfo({
+        title: '',
+        content: '',
+        penName: '',
+        cover: null,
+        category: '',
+        suggestedPrice: null,
+        description: '',
+        manuscriptId: null
       });
-
-      console.log('응답 상태:', response.status);
-      console.log('응답 객체:', response);
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log('성공 응답:', result);
-        alert('도서 등록이 완료되었습니다! 관리자 검토 후 판매가 시작됩니다.');
-        
-        // 상태 초기화
-        setBookInfo({
-          title: '',
-          content: '',
-          penName: '',
-          cover: null,
-          category: '',
-          suggestedPrice: null,
-          description: '',
-          finalPrice: '',
-          manuscriptId: null
-        });
-        setHasGenerated(false);
-        
-        navigate('/author-mypage');
-      } else {
-        let errorData;
-        try {
-          errorData = await response.json();
-          console.error('오류 응답 (JSON):', errorData);
-        } catch (e) {
-          errorData = await response.text();
-          console.error('오류 응답 (Text):', errorData);
-        }
-        alert(`등록 실패 (${response.status}): ${errorData.message || errorData || '알 수 없는 오류가 발생했습니다.'}`);
-      }
+      setHasGenerated(false);
+      
+      navigate('/authorMypage');
     } catch (error) {
       console.error('도서 등록 중 오류:', error);
-      alert(`네트워크 오류가 발생했습니다: ${error.message}`);
+      const errorMessage = error.response?.data?.message || error.message || '알 수 없는 오류가 발생했습니다';
+      alert(`등록 실패: ${errorMessage}`);
     }
   };
 
-  // 임시 저장 목록 불러오기 (컴포넌트 마운트시)
+  // 임시 저장 목록 불러오기
+  const loadTempManuscripts = async () => {
+    if (!userInfo.userId) {
+      return;
+    }
+
+    try {
+      const manuscripts = await apiClient.get(`/manuscripts/temp?authorId=${userInfo.userId}`);
+      
+      console.log('불러온 임시 저장 목록:', manuscripts);
+      
+      const formattedDrafts = manuscripts.map(manuscript => ({
+        id: manuscript.id,
+        title: manuscript.title || '제목 없음',
+        content: (manuscript.content || manuscript.contents || '').substring(0, 150),
+        saveDate: manuscript.createdAt ? manuscript.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+        wordCount: (manuscript.content || manuscript.contents || '').length
+      }));
+      
+      setSavedDrafts(formattedDrafts);
+    } catch (error) {
+      console.error('임시 저장 목록 불러오기 실패:', error);
+      setSavedDrafts([]);
+    }
+  };
+
+  // 컴포넌트 마운트시 사용자 정보 가져오기
   useEffect(() => {
-    const loadTempManuscripts = async () => {
-      try {
-        // URL 파라미터로 authorId 전달 -> 나중에 로그인하면 고쳐야함 
-      const response = await apiCall('/manuscripts/temp?authorId=1');
-
-        if (response.ok) {
-          const manuscripts = await response.json();
-          console.log('불러온 임시 저장 목록:', manuscripts);
-          
-          const formattedDrafts = manuscripts.map(manuscript => ({
-            id: manuscript.id,
-            title: manuscript.title || '제목 없음',
-            content: (manuscript.content || manuscript.contents || '').substring(0, 150), // 목록에서는 일부만 표시
-            saveDate: manuscript.createdAt ? manuscript.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
-            wordCount: (manuscript.content || manuscript.contents || '').length
-          }));
-          setSavedDrafts(formattedDrafts);
-        } else {
-          console.error('임시 저장 목록 불러오기 실패:', response.status);
-          // 실패해도 기본 목록 유지 (빈 배열로 설정)
-          setSavedDrafts([]);
-        }
-      } catch (error) {
-        console.error('임시 저장 목록 불러오기 실패:', error);
-        // 실패해도 기본 목록 유지
-        setSavedDrafts([]);
-      }
-    };
-
-    loadTempManuscripts();
+    fetchUserInfo();
   }, []);
+
+  // 사용자 정보가 로드되면 임시 저장 목록 불러오기
+  useEffect(() => {
+    if (userInfo.userId) {
+      loadTempManuscripts();
+    }
+  }, [userInfo.userId]);
+
+  // 사용자 정보 로딩 중일 때
+  if (userInfo.isLoading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#f8f9fa',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{
+          textAlign: 'center',
+          color: '#666'
+        }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏳</div>
+          <p>사용자 정보를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 사용자 정보가 없을 때
+  if (!userInfo.userId) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#f8f9fa',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{
+          textAlign: 'center',
+          color: '#666'
+        }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🚫</div>
+          <p>로그인이 필요합니다.</p>
+          <button
+            onClick={() => navigate('/login')}
+            style={{
+              marginTop: '1rem',
+              padding: '0.8rem 1.5rem',
+              backgroundColor: '#28a745',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            로그인하기
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -467,36 +481,41 @@ const BookRegisterPage = () => {
           >
             BookHub
           </h1>
-          <nav style={{ display: 'flex', gap: '1rem' }}>
-            <button
-              onClick={() => navigate('/author-mypage')}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: 'transparent',
-                border: '1px solid #666',
-                borderRadius: '4px',
-                color: '#666',
-                cursor: 'pointer',
-                fontSize: '0.9rem'
-              }}
-            >
-              작가 페이지
-            </button>
-            <button
-              onClick={() => navigate('/')}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#28a745',
-                border: 'none',
-                borderRadius: '4px',
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: '0.9rem'
-              }}
-            >
-              홈으로
-            </button>
-          </nav>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <span style={{ color: '#666', fontSize: '0.9rem' }}>
+              {userInfo.userName}님 환영합니다
+            </span>
+            <nav style={{ display: 'flex', gap: '1rem' }}>
+              <button
+                onClick={() => navigate('/author-mypage')}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: 'transparent',
+                  border: '1px solid #666',
+                  borderRadius: '4px',
+                  color: '#666',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                작가 페이지
+              </button>
+              <button
+                onClick={() => navigate('/')}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#28a745',
+                  border: 'none',
+                  borderRadius: '4px',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                홈으로
+              </button>
+            </nav>
+          </div>
         </div>
       </header>
 
