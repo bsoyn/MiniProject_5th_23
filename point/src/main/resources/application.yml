@@ -81,4 +81,12 @@ spring:
           destination: untitled
           contentType: application/json
 
+eureka:
+  client:
+    register-with-eureka: true       # Eureka에 자신 등록
+    fetch-registry: true             # 다른 서비스 탐색 허용
+    service-url:
+      defaultZone: http://130.107.221.205:8761/eureka/  # 실제 Eureka 서버 주소
 
+  instance:
+    prefer-ip-address: true          # IP 기준 등록 (도커 환경에서는 필수)
