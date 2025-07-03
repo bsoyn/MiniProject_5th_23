@@ -9,6 +9,7 @@ import untitled.domain.File;
 public class RegisterCommand {
 
     private String email;
+    private String password;
     private String name;
     private String bio;
     private String majorWork;

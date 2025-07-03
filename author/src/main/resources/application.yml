@@ -12,6 +12,9 @@ spring:
   security:
     basic:
       enabled: false
+  data:
+    rest:
+      base-path: /
   jpa:
     properties:
       hibernate:
