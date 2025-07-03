@@ -152,16 +152,23 @@ public class Point {
 
 
     public void buyPoint(BuyPointDto command) {
+        // readerId는 원래 등록된 상태라면 생략 가능
         this.readerId = command.getReaderId();
-        this.point = command.getPoint();
-        this.impUid = command.getImpUid();
+
+        // 현재 포인트 보유량
+        int current = this.point != null ? this.point : 0;
+
+        // 요청 포인트 (null 방지)
+        int added = command.getPoint() != null ? command.getPoint() : 0;
+
+        // 누적 충전
+        this.point = current + added;
+
+        // 기타 정보 저장
         this.cost = command.getCost();
-
-        // event driven
-        PointChargeRequested event = new PointChargeRequested(this);
-
-        event.publish();
+        this.impUid = command.getImpUid();
     }
+
 
 
     // 포인트 충전

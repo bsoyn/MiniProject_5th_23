@@ -16,11 +16,10 @@ import untitled.domain.*;
 
 @RestController
 @RequestMapping(value="/points")
-@Transactional
+@RequiredArgsConstructor
 public class PointController {
 
-    @Autowired
-    PointRepository pointRepository;
+    private final PointRepository pointRepository;
 
     @PatchMapping("/{id}")
     public ResponseEntity<?> buyPoint(
@@ -32,6 +31,8 @@ public class PointController {
             .orElseThrow(() -> new RuntimeException("Point 계정 없음"));
 
         point.buyPoint(command);  // <- 도메인 로직 수행
+
+        pointRepository.save(point);  // 저장 확정
 
         return ResponseEntity.ok(Map.of(
             "readerId", point.getReaderId(),
