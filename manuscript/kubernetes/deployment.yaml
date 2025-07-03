@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: manuscript
-          image: "username/manuscript:latest"
+          image: "sbells/manuscript:20250703"
           ports:
             - containerPort: 8080
           readinessProbe:
