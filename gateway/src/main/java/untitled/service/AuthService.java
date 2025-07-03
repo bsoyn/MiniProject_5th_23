@@ -32,7 +32,7 @@ public class AuthService {
             case "READER":
                 validationMono = Mono.fromCallable(() -> readerServiceClient.validate(new ValidationRequest(email, password)));
                 break;
-            case "AUTHOR": // 또는 "WRITER"
+            case "AUTHOR":
                 validationMono = Mono.fromCallable(() -> writerServiceClient.validate(new ValidationRequest(email, password)));
                 break;
             case "ADMIN":
@@ -46,12 +46,20 @@ public class AuthService {
             .onErrorResume(e -> Mono.empty())
             .flatMap(response -> {
                 if (response != null && response.isValid()) {
-                    String accessToken = jwtTokenProvider.createAccessToken(response.getUserId(), userType);
+                    String accessToken = jwtTokenProvider.createAccessToken(response.getUserId(), userType, response.getUserName());
                     return Mono.just(new TokenResponse(accessToken));
                 } else {
                     return Mono.error(new BadCredentialsException("Invalid credentials"));
                 }
             })
             .switchIfEmpty(Mono.error(new BadCredentialsException("Invalid credentials")));
+    }
+
+    public String takeUserId(String token) {
+        return jwtTokenProvider.getUserIdFromToken(token);
+    }
+
+    public String takeUserName(String token){
+        return jwtTokenProvider.getUserNameFromToken(token);
     }
 }

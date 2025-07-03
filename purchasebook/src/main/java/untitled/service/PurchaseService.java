@@ -75,6 +75,7 @@ public class PurchaseService {
 
     // '구매한 도서인지 확인' policy
     public void handleBookAccessRequest(BookAccessRequested event) {
+        Long id = event.getId();
         Long readerId = event.getReaderId();
         Long bookId = event.getBookId();
 
@@ -87,7 +88,7 @@ public class PurchaseService {
             confirmed.publishAfterCommit();
         } else {
             // 구매 내역이 없으면 'NotPurchaseBookConfirmed' 이벤트 발행
-            NotPurchaseBookConfirmed rejected = new NotPurchaseBookConfirmed(readerId, bookId);
+            NotPurchaseBookConfirmed rejected = new NotPurchaseBookConfirmed(id, readerId, bookId);
             rejected.publishAfterCommit();
         }
     }

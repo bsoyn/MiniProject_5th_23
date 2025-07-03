@@ -19,16 +19,17 @@ public class JwtTokenProvider {
         this.accessTokenValidityInMilliseconds = validity * 1000;
     }
 
-    public String createAccessToken(String userId, String userType) {
-        return createAccessToken(userId, List.of(userType));
+    public String createAccessToken(String userId, String userType, String userName) {
+        return createAccessToken(userId, List.of(userType), userName);
     }
 
-    public String createAccessToken(String userId, List<String> userTypes) {
+    public String createAccessToken(String userId, List<String> userTypes, String userName) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
         return Jwts.builder()
                 .setSubject(userId)
                 .claim("type", userTypes)
+                .claim("name", userName)
                 .setIssuedAt(now)
                 .setExpiration(validity)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -43,6 +44,15 @@ public class JwtTokenProvider {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+    }
+    public String getUserNameFromToken(String token){
+        Claims claims = Jwts.parserBuilder()
+            .setSigningKey(key)
+            .build()
+            .parseClaimsJws(token)
+            .getBody();
+        String name = claims.get("name", String.class);
+        return name;
     }
 
     // 기존 validateToken 메소드가 boolean을 반환하도록 수정하거나 확인해주세요.

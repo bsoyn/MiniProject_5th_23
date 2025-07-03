@@ -34,7 +34,7 @@ public class BookAccessService {
 
             bookAccessRepository.save(bookAccess);
 
-            BooKAccessRequested bookAccessRequested = new BooKAccessRequested(bookAccess);
+            BookAccessRequested bookAccessRequested = new BookAccessRequested(bookAccess);
 
             bookAccessRequested.publishAfterCommit();
         }else{

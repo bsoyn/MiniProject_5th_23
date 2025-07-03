@@ -1,6 +1,8 @@
 package untitled.domain;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.hibernate.annotations.ColumnDefault;
 import org.springframework.beans.BeanUtils;
 import java.time.LocalDate;
 import java.util.Collections;
@@ -30,9 +32,9 @@ public class ManagerReader {
 
     private String name;
 
-    private Boolean isSubscribe;
+    private Boolean isSubscribe = false;
 
-    private Boolean isKT;
+    private Boolean isKT = false;
 
     @PostPersist
     public void onPostPersist() {
@@ -52,9 +54,6 @@ public class ManagerReader {
         return ReaderApplication.applicationContext.getBean(PasswordEncoder.class);
     }
 
-    public void login() {
-        //
-    }
      public static ManagerReader createReader(String email, String rawPassword, String name, PasswordEncoder passwordEncoder) {
         if (email == null || rawPassword == null || name == null) {
             throw new IllegalArgumentException("필수 정보가 누락되었습니다.");
@@ -68,6 +67,7 @@ public class ManagerReader {
         reader.setPassword(passwordEncoder.encode(rawPassword));
         
         reader.setIsSubscribe(false); // 기본 구독 상태 설정
+        reader.setIsKT(false);
 
         return reader;
     }

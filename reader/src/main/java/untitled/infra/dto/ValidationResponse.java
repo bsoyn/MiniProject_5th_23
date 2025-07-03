@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class ValidationResponse {
     private boolean isValid;
     private String userId;
+    private String userName;
 }
