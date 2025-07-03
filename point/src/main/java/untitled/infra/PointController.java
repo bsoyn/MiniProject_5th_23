@@ -36,6 +36,8 @@ public class PointController {
 
         pointRepository.save(point);  // 저장 확정
 
+        pointRepository.save(point);  // 저장 확정
+
         return ResponseEntity.ok(Map.of(
             "readerId", point.getReaderId(),
             "chargedPoint", command.getPoint(),
