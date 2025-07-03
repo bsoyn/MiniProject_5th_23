@@ -13,8 +13,6 @@ public class PayRequested extends AbstractEvent {
 
     private Long id;
     private Long readerId;
-    private LocalDate subscribeStartDate;
-    private LocalDate subscribeEndDate;
 
     public PayRequested(Subscribe aggregate) {
         super(aggregate);

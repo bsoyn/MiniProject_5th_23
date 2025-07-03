@@ -10,6 +10,7 @@ import untitled.domain.PayRequested;
 import untitled.domain.SubscriptionCompleted;
 import untitled.domain.SubscriptionFinished;
 import untitled.domain.SubscriptionValidChecked;
+import untitled.domain.PointPaymentRequested;
 
 @Entity
 @Table(name = "Subscribe_table")
@@ -40,31 +41,43 @@ public class Subscribe {
         return subscribeRepository;
     }
 
-    public static void subscribeFinish(BuyApproved buyApproved) {
+    public static void subscribeRequest(PointPaymentRequested event) {
+        if (event.getBookId() != null) {
+            // 도서 구매 요청은 무시
+            return;
+        }
+
+        if (Boolean.TRUE.equals(event.getPurchase())) {
+            subscribeCompleteAlert(event);
+        } else {
+            subscribeFailAlert(event);
+        }
+    }
+
+    public static void subscribeCompleteAlert(PointPaymentRequested event) {
         Subscribe subscribe = new Subscribe();
-        subscribe.setReaderId(buyApproved.getReaderId());
+        subscribe.setReaderId(event.getReaderId());
         subscribe.setSubscribeStartDate(LocalDate.now());
         subscribe.setSubscribeEndDate(LocalDate.now().plusMonths(1));
 
         repository().save(subscribe);
 
-        SubscriptionCompleted event = new SubscriptionCompleted();
-        event.setReaderId(subscribe.getReaderId());
-        event.setSubscribeStartDate(subscribe.getSubscribeStartDate());
-        event.setSubscribeEndDate(subscribe.getSubscribeEndDate());
-        event.publishAfterCommit();
+        SubscriptionCompleted completedEvent = new SubscriptionCompleted(subscribe);
+        completedEvent.publishAfterCommit();
+
+        System.out.println("구독 완료 이벤트 발행: " + completedEvent);
     }
 
-    public static void subscribeFailAlert(BuyRejected buyRejected) {
-        SubscriptionFailed event = new SubscriptionFailed();
-        event.setReaderId(buyRejected.getReaderId());
-        event.setReason("포인트 부족으로 결제 실패");  // 필요에 따라 수정 가능
+    public static void subscribeFailAlert(PointPaymentRequested event) {
+        SubscriptionFailed failedEvent = new SubscriptionFailed();
+        failedEvent.setReaderId(event.getReaderId());
+        failedEvent.setReason("포인트 부족으로 구독 실패");
 
-        event.publishAfterCommit();
+        failedEvent.publishAfterCommit();
 
-        System.out.println("구독 실패 알림 이벤트 전송 완료: " + event);
-
+        System.out.println("구독 실패 이벤트 발행: " + failedEvent);
     }
+    
     public static void subscriptionValidCheck(
         BookAccessRequested bookAccessRequested
     ) {
