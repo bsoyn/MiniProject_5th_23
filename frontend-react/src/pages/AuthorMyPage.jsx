@@ -28,7 +28,7 @@ const AuthorMyPage = () => {
     fetchAuthorBooks();
   }, []);
 
-  // JWT 토큰에서 사용자 정보 추출 (개선된 버전)
+  // JWT 토큰에서 사용자 정보 추출 
   const getUserInfoFromToken = (token) => {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
