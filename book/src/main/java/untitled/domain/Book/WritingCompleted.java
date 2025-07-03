@@ -17,7 +17,4 @@ public class WritingCompleted extends AbstractEvent {
     private String category;
     private Integer price;
     private Long manuscriptId;
-    private String authorName; // 필명 필드 추가
-
-    
 }
