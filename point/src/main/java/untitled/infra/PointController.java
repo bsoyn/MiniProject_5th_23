@@ -46,6 +46,20 @@ public class PointController {
         ));
     }
 
+    // readerId로 포인트 조회
+    @GetMapping("/reader/{readerId}")
+    public ResponseEntity<?> getPointByReaderId(@PathVariable Long readerId) {
+        Point point = pointRepository.findByReaderId(readerId)
+            .orElseThrow(() -> new RuntimeException("포인트 계정이 없습니다."));
+
+        return ResponseEntity.ok(Map.of(
+            "readerId", point.getReaderId(),
+            "totalPoint", point.getPoint() != null ? point.getPoint() : 0,
+            "pointId", point.getId(),
+            "status", "SUCCESS"
+        ));
+    }
+
 }
 //>>> Clean Arch / Inbound Adaptor
 
