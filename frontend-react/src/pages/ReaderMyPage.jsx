@@ -1,30 +1,124 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiCall } from '../config/api';
 
 const ReaderMyPage = () => {
   const navigate = useNavigate();
-  
-  // 사용자 정보 및 상태
-  const [userInfo, setUserInfo] = useState({
-    name: '홍길동',
-    email: 'hong@example.com',
-    points: 15000,
-    subscriptionEndDate: '2025-08-15', // null이면 구독권 없음
-    joinDate: '2024-01-15'
-  });
-
-  // 구매한 도서 목록
-  const [purchasedBooks, setPurchasedBooks] = useState([
-    { id: 1, title: '미래의 기억', author: '김작가', purchaseDate: '2025-06-15', price: 5000 },
-    { id: 2, title: '도시의 밤', author: '이작가', purchaseDate: '2025-06-20', price: 4500 },
-    { id: 3, title: '바람의 노래', author: '박작가', purchaseDate: '2025-06-25', price: 5500 }
-  ]);
-
+  const [userId, setUserId] = useState("");
+  const [userInfo, setUserInfo] = useState(null);
+  const [pointInfo, setPointInfo] = useState(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState(null);
+  const [purchasedBooks, setPurchasedBooks] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   // 충전/구매 모달 상태
   const [showChargeModal, setShowChargeModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [chargeAmount, setChargeAmount] = useState('');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      const accessToken = sessionStorage.getItem('accessToken');
+      console.log(accessToken);
+      if (!accessToken) {
+        navigate('/login');
+        return;
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${accessToken}`,
+      };
+
+      try {
+        const tokenResponse = await fetch("/api/token", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
+        });
+
+        if (!tokenResponse.ok) {
+          throw new Error('Token validation failed');
+        }
+
+        const tokenData = await tokenResponse.json();
+        const currentUserId = tokenData.userId;
+        setUserId(currentUserId);
+        
+        const userResponse = await fetch(`/managerReaders/${currentUserId}`, {
+          method: 'GET',
+          headers: headers,
+        });
+
+        //api url 수정
+        // const pointResponse = await fetch(`/points/${currentUserId}`, {
+        //   method: 'GET',
+        //   headers: headers,
+        // });
+        // const subscriptionResponse = await fetch(`/subscribes/${currentUserId}`,{
+        //   method: 'GET',
+        //   headers: headers,
+        // });
+        // const booksResponse = await fetch(`/availiableBookLists/${currentUserId}`,{
+        //   method: 'GET',
+        //   headers: headers,
+        // });
+
+        // console.log(pointResponse);
+        // console.log(subscriptionResponse);
+        // console.log(booksResponse);
+
+        const userData = await userResponse.json();
+        const pointData = {totalPoint:1}; //pointData를 받아오지 못하는 상태라서 임의로 값을 부여해둠(오류가 생김)
+        // const pointData = await pointResponse.json();
+        // const subscriptionData = await subscriptionResponse.json();
+        // const booksData = await booksResponse.json();
+
+        setUserInfo(userData);
+        setUserInfo(prev => ({
+          ...prev,
+          points: pointData.totalPoint // DB 기준 최신 포인트 반영
+        }));
+        // setPointInfo(pointData);
+        // setSubscriptionInfo(subscriptionData);
+        // setPurchasedBooks(booksData);
+
+      } catch (err) {
+        console.error(err);
+        setError(err.message);
+        if (err.message === 'Token validation failed') {
+          navigate('/login');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [navigate]);
+
+  if (isLoading) {
+    return <div>로딩 중...</div>;
+  }
+
+  if (error) {
+    return <div>오류: {error}</div>;
+  }
+  // // 사용자 정보 및 상태
+  // const [userInfo, setUserInfo] = useState({
+  //   name: '홍길동',
+  //   email: 'hong@example.com',
+  //   points: 15000,
+  //   subscriptionEndDate: '2025-08-15', // null이면 구독권 없음
+  //   joinDate: '2024-01-15'
+  // });
+
+  // // 구매한 도서 목록
+  // const [purchasedBooks, setPurchasedBooks] = useState([
+  //   { id: 1, title: '미래의 기억', author: '김작가', purchaseDate: '2025-06-15', price: 5000 },
+  //   { id: 2, title: '도시의 밤', author: '이작가', purchaseDate: '2025-06-20', price: 4500 },
+  //   { id: 3, title: '바람의 노래', author: '박작가', purchaseDate: '2025-06-25', price: 5500 }
+  // ]);
+
 
   const handlePointCharge = async (amount) => {
     try {
@@ -60,7 +154,7 @@ const ReaderMyPage = () => {
   };
 
   const handleSubscriptionPurchase = () => {
-    if (userInfo.points >= 9900) {
+    if (userInfo?.points >= 9900) {
       setUserInfo(prev => ({
         ...prev,
         points: prev.points - 9900,
@@ -73,7 +167,7 @@ const ReaderMyPage = () => {
     }
   };
 
-  const isSubscriptionActive = userInfo.subscriptionEndDate && new Date(userInfo.subscriptionEndDate) > new Date();
+  const isSubscriptionActive = subscriptionInfo && new Date(subscriptionInfo.endDate) > new Date();
 
   return (
     <div style={{
@@ -177,10 +271,10 @@ const ReaderMyPage = () => {
                 }}>
                   👤
                 </div>
-                <h3 style={{ color: '#333', marginBottom: '0.5rem' }}>{userInfo.name}</h3>
-                <p style={{ color: '#666', fontSize: '0.9rem' }}>{userInfo.email}</p>
+                <h3 style={{ color: '#333', marginBottom: '0.5rem' }}>{userInfo?.name}</h3>
+                <p style={{ color: '#666', fontSize: '0.9rem' }}>{userInfo?.email}</p>
                 <p style={{ color: '#999', fontSize: '0.8rem' }}>
-                  가입일: {new Date(userInfo.joinDate).toLocaleDateString()}
+                  가입일: {new Date(userInfo?.joinDate).toLocaleDateString()}
                 </p>
               </div>
             </div>
@@ -204,7 +298,7 @@ const ReaderMyPage = () => {
                 }}>
                   <span style={{ color: '#666' }}>포인트</span>
                   <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#007bff' }}>
-                    {userInfo.points.toLocaleString()}P
+                    {userInfo?.points.toLocaleString()}P
                   </span>
                 </div>
                 <button
@@ -236,7 +330,7 @@ const ReaderMyPage = () => {
                     fontSize: '0.9rem',
                     color: isSubscriptionActive ? '#28a745' : '#dc3545'
                   }}>
-                    {isSubscriptionActive ? `${userInfo.subscriptionEndDate}까지` : '미구독'}
+                    {isSubscriptionActive ? `${userInfo?.subscriptionEndDate}까지` : '미구독'}
                   </span>
                 </div>
                 <button
@@ -479,10 +573,10 @@ const ReaderMyPage = () => {
               justifyContent: 'space-between',
               marginBottom: '1.5rem',
               fontSize: '0.9rem',
-              color: userInfo.points >= 9900 ? '#28a745' : '#dc3545'
+              color: userInfo?.points >= 9900 ? '#28a745' : '#dc3545'
             }}>
               <span>보유 포인트:</span>
-              <span>{userInfo.points.toLocaleString()}P</span>
+              <span>{userInfo?.points.toLocaleString()}P</span>
             </div>
 
             <div style={{ display: 'flex', gap: '1rem' }}>
@@ -505,13 +599,13 @@ const ReaderMyPage = () => {
                 style={{
                   flex: 1,
                   padding: '0.8rem',
-                  backgroundColor: userInfo.points >= 9900 ? '#28a745' : '#6c757d',
+                  backgroundColor: userInfo?.points >= 9900 ? '#28a745' : '#6c757d',
                   color: '#fff',
                   border: 'none',
                   borderRadius: '4px',
-                  cursor: userInfo.points >= 9900 ? 'pointer' : 'not-allowed'
+                  cursor: userInfo?.points >= 9900 ? 'pointer' : 'not-allowed'
                 }}
-                disabled={userInfo.points < 9900}
+                disabled={userInfo?.points < 9900}
               >
                 구매하기
               </button>
