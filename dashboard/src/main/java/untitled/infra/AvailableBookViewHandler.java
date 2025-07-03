@@ -11,11 +11,19 @@ import untitled.config.kafka.KafkaProcessor;
 import untitled.domain.*;
 
 @Service
-public class AvailiableBookListViewHandler {
+public class AvailableBookViewHandler {
 
     //<<< DDD / CQRS
-    @Autowired
-    private AvailiableBookListRepository availiableBookListRepository;
+
+    private final BookClient bookClient;
+    private final ReaderClient readerClient;
+    private final AvailableBookViewRepository availableBookViewRepository;
+
+    public AvailableBookViewHandler(BookClient bookClient, ReaderClient readerClient, AvailableBookViewRepository availableBookViewRepository){
+        this.bookClient = bookClient;
+        this.readerClient = readerClient;
+        this.availableBookViewRepository = availableBookViewRepository;
+    }
 
     @StreamListener(KafkaProcessor.INPUT)
     public void whenBookAccessApproved_then_CREATE_1(
@@ -25,16 +33,18 @@ public class AvailiableBookListViewHandler {
             if (!bookAccessApproved.validate()) return;
 
             // view 객체 생성
-            AvailiableBookList availiableBookList = new AvailiableBookList();
+            AvailableBookView view = new AvailableBookView();
             // view 객체에 이벤트의 Value 를 set 함
-            availiableBookList.setBookid(bookAccessApproved.getId());
-            availiableBookList.setReaderid(bookAccessApproved.getReaderId());
-            availiableBookList.setIsPurchased(
+            view.setBookId(bookAccessApproved.getBookId());
+            view.setReaderId(bookAccessApproved.getReaderId());
+            view.setIsPurchased(
                 bookAccessApproved.getIsPurchased()
             );
-            availiableBookList.setReadStart(false);
+            view.setReadStart(false);
+
+
             // view 레파지 토리에 save
-            availiableBookListRepository.save(availiableBookList);
+            availableBookViewRepository.save(view);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -48,14 +58,14 @@ public class AvailiableBookListViewHandler {
             if (!purchasedCompleted.validate()) return;
             // view 객체 조회
 
-            List<AvailiableBookList> availiableBookListList = availiableBookListRepository.findByBookid(
+            List<AvailableBookView> availiableBookListList = availableBookViewRepository.findByBookid(
                 purchasedCompleted.getBookId()
             );
-            for (AvailiableBookList availiableBookList : availiableBookListList) {
+            for (AvailableBookView availiableBookList : availiableBookListList) {
                 // view 객체에 이벤트의 eventDirectValue 를 set 함
                 availiableBookList.setIsPurchased(true);
                 // view 레파지 토리에 save
-                availiableBookListRepository.save(availiableBookList);
+                availableBookViewRepository.save(availiableBookList);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -69,7 +79,7 @@ public class AvailiableBookListViewHandler {
         try {
             if (!subscriptionFinished.validate()) return;
             // view 레파지 토리에 삭제 쿼리
-            availiableBookListRepository.deleteByReaderid(
+            availableBookViewRepository.deleteByReaderid(
                 subscriptionFinished.getReaderId()
             );
         } catch (Exception e) {

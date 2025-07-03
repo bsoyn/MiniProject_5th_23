@@ -6,12 +6,12 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import untitled.domain.*;
 
 @RepositoryRestResource(
-    collectionResourceRel = "availiableBookLists",
-    path = "availiableBookLists"
+    collectionResourceRel = "availableBookViews",
+    path = "availableBookViews"
 )
-public interface AvailiableBookListRepository
-    extends PagingAndSortingRepository<AvailiableBookList, Long> {
-    List<AvailiableBookList> findByBookid(Long bookid);
+public interface AvailableBookViewRepository
+    extends PagingAndSortingRepository<AvailableBookView, Long> {
+    List<AvailableBookView> findByBookid(Long bookid);
 
     void deleteByReaderid(Long readerid);
 }
