@@ -49,98 +49,6 @@ const AuthorMyPage = () => {
     }
   ]);
 
-  // 새 도서 등록 모달 상태
-  const [showNewBookModal, setShowNewBookModal] = useState(false);
-  const [newBook, setNewBook] = useState({
-    title: '',
-    description: '',
-    price: '',
-    content: null,
-    coverImage: null
-  });
-
-  const [errors, setErrors] = useState({});
-
-  const handleNewBookChange = (e) => {
-    const { name, value, files } = e.target;
-    
-    if (name === 'content' || name === 'coverImage') {
-      setNewBook(prev => ({
-        ...prev,
-        [name]: files[0]
-      }));
-    } else {
-      setNewBook(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
-
-    // 에러 메시지 제거
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
-  };
-
-  const validateNewBook = () => {
-    const newErrors = {};
-
-    if (!newBook.title.trim()) {
-      newErrors.title = '제목을 입력해주세요';
-    }
-
-    if (!newBook.description.trim()) {
-      newErrors.description = '설명을 입력해주세요';
-    }
-
-    if (!newBook.price || newBook.price < 1000) {
-      newErrors.price = '가격은 1000P 이상이어야 합니다';
-    }
-
-    if (!newBook.content) {
-      newErrors.content = '도서 파일을 업로드해주세요';
-    }
-
-    return newErrors;
-  };
-
-  const handleSubmitNewBook = (e) => {
-    e.preventDefault();
-    const newErrors = validateNewBook();
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    // 새 도서 추가
-    const bookToAdd = {
-      id: Date.now(),
-      title: newBook.title,
-      description: newBook.description,
-      price: parseInt(newBook.price),
-      publishDate: new Date().toISOString().split('T')[0],
-      sales: 0,
-      status: '검토중',
-      totalRevenue: 0
-    };
-
-    setAuthorBooks(prev => [bookToAdd, ...prev]);
-    setNewBook({
-      title: '',
-      description: '',
-      price: '',
-      content: null,
-      coverImage: null
-    });
-    setErrors({});
-    setShowNewBookModal(false);
-    alert('새 도서가 등록되었습니다. 관리자 검토 후 판매가 시작됩니다.');
-  };
-
   const getStatusColor = (status) => {
     switch (status) {
       case '판매중': return '#28a745';
@@ -149,16 +57,6 @@ const AuthorMyPage = () => {
       default: return '#6c757d';
     }
   };
-
-  const inputStyle = (fieldName) => ({
-    width: '100%',
-    padding: '0.8rem',
-    border: errors[fieldName] ? '2px solid #dc3545' : '1px solid #ddd',
-    borderRadius: '4px',
-    fontSize: '1rem',
-    outline: 'none',
-    boxSizing: 'border-box'
-  });
 
   return (
     <div style={{
@@ -242,7 +140,7 @@ const AuthorMyPage = () => {
             작가 페이지
           </h2>
           <button
-            onClick={() => setShowNewBookModal(true)}
+            onClick={() => navigate('/bookRegister')}
             style={{
               padding: '0.8rem 1.5rem',
               backgroundColor: '#28a745',
@@ -483,7 +381,7 @@ const AuthorMyPage = () => {
                   <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📝</div>
                   <p>아직 등록한 도서가 없습니다.</p>
                   <button
-                    onClick={() => setShowNewBookModal(true)}
+                    onClick={() => navigate('/bookRegister')}
                     style={{
                       marginTop: '1rem',
                       padding: '0.8rem 1.5rem',
@@ -502,233 +400,6 @@ const AuthorMyPage = () => {
           </div>
         </div>
       </div>
-
-      {/* 새 도서 등록 모달 */}
-      {showNewBookModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: '#fff',
-            borderRadius: '8px',
-            padding: '2rem',
-            maxWidth: '600px',
-            width: '90%',
-            maxHeight: '90vh',
-            overflowY: 'auto'
-          }}>
-            <h3 style={{ marginBottom: '1.5rem', color: '#333' }}>새 도서 등록</h3>
-            
-            <form onSubmit={handleSubmitNewBook}>
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '0.5rem',
-                  color: '#333',
-                  fontWeight: '500'
-                }}>
-                  도서 제목 *
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={newBook.title}
-                  onChange={handleNewBookChange}
-                  placeholder="도서 제목을 입력하세요"
-                  style={inputStyle('title')}
-                />
-                {errors.title && (
-                  <span style={{ color: '#dc3545', fontSize: '0.8rem', marginTop: '0.3rem', display: 'block' }}>
-                    {errors.title}
-                  </span>
-                )}
-              </div>
-
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '0.5rem',
-                  color: '#333',
-                  fontWeight: '500'
-                }}>
-                  도서 설명 *
-                </label>
-                <textarea
-                  name="description"
-                  value={newBook.description}
-                  onChange={handleNewBookChange}
-                  placeholder="도서 설명을 입력하세요"
-                  rows={4}
-                  style={{
-                    ...inputStyle('description'),
-                    resize: 'vertical'
-                  }}
-                />
-                {errors.description && (
-                  <span style={{ color: '#dc3545', fontSize: '0.8rem', marginTop: '0.3rem', display: 'block' }}>
-                    {errors.description}
-                  </span>
-                )}
-              </div>
-
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '0.5rem',
-                  color: '#333',
-                  fontWeight: '500'
-                }}>
-                  가격 (포인트) *
-                </label>
-                <input
-                  type="number"
-                  name="price"
-                  value={newBook.price}
-                  onChange={handleNewBookChange}
-                  placeholder="1000"
-                  min="1000"
-                  style={inputStyle('price')}
-                />
-                {errors.price && (
-                  <span style={{ color: '#dc3545', fontSize: '0.8rem', marginTop: '0.3rem', display: 'block' }}>
-                    {errors.price}
-                  </span>
-                )}
-              </div>
-
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '0.5rem',
-                  color: '#333',
-                  fontWeight: '500'
-                }}>
-                  도서 파일 *
-                </label>
-                <div style={{
-                  border: errors.content ? '2px solid #dc3545' : '2px dashed #ddd',
-                  borderRadius: '4px',
-                  padding: '2rem',
-                  textAlign: 'center',
-                  backgroundColor: '#fafafa',
-                  cursor: 'pointer'
-                }}>
-                  <input
-                    type="file"
-                    name="content"
-                    onChange={handleNewBookChange}
-                    accept=".pdf,.epub,.txt"
-                    style={{ display: 'none' }}
-                    id="content-upload"
-                  />
-                  <label htmlFor="content-upload" style={{ cursor: 'pointer' }}>
-                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📄</div>
-                    <div style={{ color: '#333', fontWeight: '500', marginBottom: '0.3rem' }}>
-                      {newBook.content ? newBook.content.name : '도서 파일 업로드'}
-                    </div>
-                    <div style={{ color: '#666', fontSize: '0.8rem' }}>
-                      PDF, EPUB, TXT 파일 지원
-                    </div>
-                  </label>
-                </div>
-                {errors.content && (
-                  <span style={{ color: '#dc3545', fontSize: '0.8rem', marginTop: '0.3rem', display: 'block' }}>
-                    {errors.content}
-                  </span>
-                )}
-              </div>
-
-              <div style={{ marginBottom: '2rem' }}>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '0.5rem',
-                  color: '#333',
-                  fontWeight: '500'
-                }}>
-                  표지 이미지 (선택)
-                </label>
-                <div style={{
-                  border: '2px dashed #ddd',
-                  borderRadius: '4px',
-                  padding: '1.5rem',
-                  textAlign: 'center',
-                  backgroundColor: '#fafafa',
-                  cursor: 'pointer'
-                }}>
-                  <input
-                    type="file"
-                    name="coverImage"
-                    onChange={handleNewBookChange}
-                    accept=".jpg,.jpeg,.png,.gif"
-                    style={{ display: 'none' }}
-                    id="cover-upload"
-                  />
-                  <label htmlFor="cover-upload" style={{ cursor: 'pointer' }}>
-                    <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🖼️</div>
-                    <div style={{ color: '#333', fontWeight: '500', marginBottom: '0.3rem' }}>
-                      {newBook.coverImage ? newBook.coverImage.name : '표지 이미지 업로드'}
-                    </div>
-                    <div style={{ color: '#666', fontSize: '0.8rem' }}>
-                      JPG, PNG, GIF 파일 지원
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowNewBookModal(false);
-                    setNewBook({
-                      title: '',
-                      description: '',
-                      price: '',
-                      content: null,
-                      coverImage: null
-                    });
-                    setErrors({});
-                  }}
-                  style={{
-                    flex: 1,
-                    padding: '0.8rem',
-                    backgroundColor: '#6c757d',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  style={{
-                    flex: 1,
-                    padding: '0.8rem',
-                    backgroundColor: '#28a745',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  등록하기
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
