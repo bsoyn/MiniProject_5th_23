@@ -1,55 +1,132 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const ReaderMyPage = () => {
   const navigate = useNavigate();
-  
-  // 사용자 정보 및 상태
-  const [userInfo, setUserInfo] = useState({
-    name: '홍길동',
-    email: 'hong@example.com',
-    points: 15000,
-    subscriptionEndDate: '2025-08-15', // null이면 구독권 없음
-    joinDate: '2024-01-15'
-  });
+  const [userId, setUserId] = useState("");
+  const [userInfo, setUserInfo] = useState(null);
+  const [pointInfo, setPointInfo] = useState(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState(null);
+  const [purchasedBooks, setPurchasedBooks] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // 구매한 도서 목록
-  const [purchasedBooks, setPurchasedBooks] = useState([
-    { id: 1, title: '미래의 기억', author: '김작가', purchaseDate: '2025-06-15', price: 5000 },
-    { id: 2, title: '도시의 밤', author: '이작가', purchaseDate: '2025-06-20', price: 4500 },
-    { id: 3, title: '바람의 노래', author: '박작가', purchaseDate: '2025-06-25', price: 5500 }
-  ]);
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      const accessToken = sessionStorage.getItem('accessToken');
+      console.log(accessToken);
+      if (!accessToken) {
+        navigate('/login');
+        return;
+      }
 
-  // 충전/구매 모달 상태
+      const headers = {
+        'Authorization': `Bearer ${accessToken}`,
+      };
+
+      try {
+        const tokenResponse = await fetch("/api/token", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
+        });
+
+        if (!tokenResponse.ok) {
+          throw new Error('Token validation failed');
+        }
+
+        const tokenData = await tokenResponse.json();
+        const currentUserId = tokenData.userId;
+        setUserId(currentUserId);
+        
+        const userResponse = await fetch(`/managerReaders/${currentUserId}`, {
+          method: 'GET',
+          headers: headers,
+        });
+
+        //api url 수정
+        // const pointResponse = await fetch(`/points/${currentUserId}`, {
+        //   method: 'GET',
+        //   headers: headers,
+        // });
+        // const subscriptionResponse = await fetch(`/subscribes/${currentUserId}`,{
+        //   method: 'GET',
+        //   headers: headers,
+        // });
+        // const booksResponse = await fetch(`/availiableBookLists/${currentUserId}`,{
+        //   method: 'GET',
+        //   headers: headers,
+        // });
+
+        // console.log(pointResponse);
+        // console.log(subscriptionResponse);
+        // console.log(booksResponse);
+
+        const userData = await userResponse.json();
+        // const pointData = await pointResponse.json();
+        // const subscriptionData = await subscriptionResponse.json();
+        // const booksData = await booksResponse.json();
+
+        setUserInfo(userData);
+        // setPointInfo(pointData);
+        // setSubscriptionInfo(subscriptionData);
+        // setPurchasedBooks(booksData);
+
+      } catch (err) {
+        console.error(err);
+        setError(err.message);
+        if (err.message === 'Token validation failed') {
+          navigate('/login');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [navigate]);
+
+  // ... (모달 관련 로직은 일단 그대로 둡니다)
   const [showChargeModal, setShowChargeModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [chargeAmount, setChargeAmount] = useState('');
 
-  const handlePointCharge = (amount) => {
-    setUserInfo(prev => ({
-      ...prev,
-      points: prev.points + amount
-    }));
-    setShowChargeModal(false);
-    setChargeAmount('');
-    alert(`${amount.toLocaleString()}P가 충전되었습니다!`);
-  };
+  if (isLoading) {
+    return <div>로딩 중...</div>;
+  }
 
-  const handleSubscriptionPurchase = () => {
-    if (userInfo.points >= 9900) {
+  if (error) {
+    return <div>오류: {error}</div>;
+  }
+  // const [chargeAmount, setChargeAmount] = useState('');
+  
+    const handlePointCharge = (amount) => {
       setUserInfo(prev => ({
         ...prev,
-        points: prev.points - 9900,
-        subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        points: prev.points + amount
       }));
-      setShowSubscriptionModal(false);
-      alert('월 구독권이 구매되었습니다!');
-    } else {
-      alert('포인트가 부족합니다. 포인트를 충전해주세요.');
-    }
-  };
+      setShowChargeModal(false);
+      // setChargeAmount('');
+      alert(`${amount.toLocaleString()}P가 충전되었습니다!`);
+    };
+  
+    const handleSubscriptionPurchase = () => {
+      if (userInfo.points >= 9900) {
+        setUserInfo(prev => ({
+          ...prev,
+          points: prev.points - 9900,
+          subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        }));
+        setShowSubscriptionModal(false);
+        alert('월 구독권이 구매되었습니다!');
+      } else {
+        alert('포인트가 부족합니다. 포인트를 충전해주세요.');
+      }
+    };
+  
+    // const isSubscriptionActive = userInfo.subscriptionEndDate && new Date(userInfo.subscriptionEndDate) > new Date();
+  
 
-  const isSubscriptionActive = userInfo.subscriptionEndDate && new Date(userInfo.subscriptionEndDate) > new Date();
+  const isSubscriptionActive = subscriptionInfo && new Date(subscriptionInfo.endDate) > new Date();
 
   return (
     <div style={{
@@ -153,10 +230,10 @@ const ReaderMyPage = () => {
                 }}>
                   👤
                 </div>
-                <h3 style={{ color: '#333', marginBottom: '0.5rem' }}>{userInfo.name}</h3>
-                <p style={{ color: '#666', fontSize: '0.9rem' }}>{userInfo.email}</p>
+                <h3 style={{ color: '#333', marginBottom: '0.5rem' }}>{userInfo?.name}</h3>
+                <p style={{ color: '#666', fontSize: '0.9rem' }}>{userInfo?.email}</p>
                 <p style={{ color: '#999', fontSize: '0.8rem' }}>
-                  가입일: {new Date(userInfo.joinDate).toLocaleDateString()}
+                  가입일: {userInfo?.joinDate ? new Date(userInfo.joinDate).toLocaleDateString() : '-'}
                 </p>
               </div>
             </div>
@@ -180,7 +257,7 @@ const ReaderMyPage = () => {
                 }}>
                   <span style={{ color: '#666' }}>포인트</span>
                   <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#007bff' }}>
-                    {userInfo.points.toLocaleString()}P
+                    {pointInfo?.points.toLocaleString()}P
                   </span>
                 </div>
                 <button
@@ -212,7 +289,7 @@ const ReaderMyPage = () => {
                     fontSize: '0.9rem',
                     color: isSubscriptionActive ? '#28a745' : '#dc3545'
                   }}>
-                    {isSubscriptionActive ? `${userInfo.subscriptionEndDate}까지` : '미구독'}
+                    {isSubscriptionActive ? `${new Date(subscriptionInfo.endDate).toLocaleDateString()}까지` : '미구독'}
                   </span>
                 </div>
                 <button
@@ -274,10 +351,10 @@ const ReaderMyPage = () => {
                           {book.title}
                         </h4>
                         <p style={{ color: '#666', marginBottom: '0.3rem' }}>
-                          저자: {book.author}
+                          저자: {book.authorName}
                         </p>
                         <p style={{ color: '#999', fontSize: '0.8rem' }}>
-                          구매일: {new Date(book.purchaseDate).toLocaleDateString()}
+                          구매일: {new Date(book.purchasedDate).toLocaleDateString()}
                         </p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
