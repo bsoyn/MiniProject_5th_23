@@ -37,6 +37,8 @@ public class Point {
 
     private Integer cost;
 
+    private Integer price;
+
     @PreUpdate
     public void onPreUpdate() {
         PointPaymentRequested pointPaymentRequested = new PointPaymentRequested(
@@ -63,58 +65,38 @@ public class Point {
 
     }
 
-    // 수정 완료
-    public static void readRemainingPoint(PurchaseBookRequested purchaseBookRequested) {
+    // 수정 완료  -> 결제 요청 보냈어! publish 했어!! 해연님
+    public static void readRemainingPoint(PurchaseBookRequested purchaseBookRequested, Point point) {
         //implement business logic here:
-
-        Point point = repository().findByReaderId(purchaseBookRequested.getReaderId())
-        .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
         
         // 포인트로 도서 결제 요청 이벤트 발행
-        PointPaymentRequested pointPaymentRequested = new PointPaymentRequested();
-        pointPaymentRequested.setReaderId(purchaseBookRequested.getReaderId());
-        pointPaymentRequested.setPoint(point.getPoint());
-        pointPaymentRequested.setBookId(purchaseBookRequested.getBookId());
-        pointPaymentRequested.publish();
+        RemainingPointChecked remainingPointChecked = new RemainingPointChecked();
+        remainingPointChecked.setReaderId(purchaseBookRequested.getReaderId());
+        remainingPointChecked.setPoint(point.getPoint());
+        remainingPointChecked.setBookId(purchaseBookRequested.getBookId());
+        remainingPointChecked.setPrice(purchaseBookRequested.getPrice());
+        
+        usePoint(remainingPointChecked);
+        // remainingPointChecked.publish();
     }
 
-    public static void usePoint(RemainingPointChecked remainingPointChecked) {
+    public static PointPaymentRequested usePoint(RemainingPointChecked remainingPointChecked) {
         Point point = repository().findByReaderId(remainingPointChecked.getReaderId())
             .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
 
-        if (point.getPoint() >= remainingPointChecked.getPoint()) {
-            point.setPoint(point.getPoint() - remainingPointChecked.getPoint());
+        // price랑 point 비교 -> point가 더 많아. ::> point를 써야해
+        PointPaymentRequested pointPaymentRequested;
+        if (remainingPointChecked.getPoint() >= remainingPointChecked.getPrice()) {
+            point.setPoint(point.getPoint() - remainingPointChecked.getPrice());
             repository().save(point);
 
-            BuyApproved approved = new BuyApproved(point);
-            approved.setReaderId(point.getReaderId());
-            approved.setPoint(remainingPointChecked.getPoint());
-
-            // 💡 도서 구매 vs 구독 구분 처리
-            if (remainingPointChecked.getBookId() != null) {
-                approved.setBookId(remainingPointChecked.getBookId());
-            } else {
-                approved.setSubscribeStartDate(remainingPointChecked.getSubscribeStartDate());
-                approved.setSubscribeEndDate(remainingPointChecked.getSubscribeEndDate());
-            }
-
-            approved.publish();
-
+            pointPaymentRequested = new PointPaymentRequested(remainingPointChecked.getReaderId(), remainingPointChecked.getBookId(), true);
         } else {
-            BuyRejected rejected = new BuyRejected(point);
-            rejected.setReaderId(point.getReaderId());
-            rejected.setPoint(remainingPointChecked.getPoint());
-            rejected.setReason("잔액 부족");
-
-            if (remainingPointChecked.getBookId() != null) {
-                rejected.setBookId(remainingPointChecked.getBookId());
-            } else {
-                rejected.setSubscribeStartDate(remainingPointChecked.getSubscribeStartDate());
-                rejected.setSubscribeEndDate(remainingPointChecked.getSubscribeEndDate());
-            }
-
-            rejected.publish();
+            pointPaymentRequested = new PointPaymentRequested(remainingPointChecked.getReaderId(), remainingPointChecked.getBookId(), false);
         }
+
+        pointPaymentRequested.publish();
+        return pointPaymentRequested;
     }
 
 
@@ -137,38 +119,33 @@ public class Point {
 
     }
 
+    // 태현님!
     public static void readRemainingPoint(PayRequested payRequested) {
         Point point = repository().findByReaderId(payRequested.getReaderId())
             .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
 
-        int requiredPoint = 5000;
-
-        PointPaymentRequested pointPaymentRequested = new PointPaymentRequested();
-        pointPaymentRequested.setReaderId(payRequested.getReaderId());
-        pointPaymentRequested.setPoint(requiredPoint); 
-        pointPaymentRequested.setBookId(null); 
-        pointPaymentRequested.publish();
+        // 담고 결제 이벤트 가야지!
+        RemainingPointChecked remainingPointChecked = new RemainingPointChecked();
+        remainingPointChecked.setReaderId(payRequested.getReaderId());
+        remainingPointChecked.setPrice(9900); 
+        remainingPointChecked.setPoint(point.getPoint());
+        remainingPointChecked.setBookId(null); 
+        usePoint(remainingPointChecked);
+        // remainingPointChecked.publish();
     }
 
 
     public void buyPoint(BuyPointDto command) {
-        // readerId는 원래 등록된 상태라면 생략 가능
         this.readerId = command.getReaderId();
-
-        // 현재 포인트 보유량
-        int current = this.point != null ? this.point : 0;
-
-        // 요청 포인트 (null 방지)
-        int added = command.getPoint() != null ? command.getPoint() : 0;
-
-        // 누적 충전
-        this.point = current + added;
-
-        // 기타 정보 저장
-        this.cost = command.getCost();
+        this.point = command.getPoint();
         this.impUid = command.getImpUid();
-    }
+        this.cost = command.getCost();
 
+        // event driven
+        PointChargeRequested event = new PointChargeRequested(this);
+
+        event.publish();
+    }
 
 
     // 포인트 충전

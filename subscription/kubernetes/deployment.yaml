@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: subscription
-          image: "username/subscription:latest"
+          image: "sbells/subscription:20250703"
           ports:
             - containerPort: 8080
           readinessProbe:
