@@ -6,21 +6,23 @@ const BASE_URL = process.env.REACT_APP_API_BASE_URL;
 const AdminPage = () => {
   const navigate = useNavigate();
   const [pendingAuthors, setPendingAuthors] = useState([]);
+  const [approvedAuthors, setApprovedAuthors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedAuthor, setSelectedAuthor] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [actionType, setActionType] = useState(''); // 'approve' or 'deny'
+  const [activeTab, setActiveTab] = useState('pending'); // 'pending' or 'approved'
 
-  // 페이지 로드 시 승인 대기 작가 목록 가져오기
+  // 페이지 로드 시 작가 목록 가져오기
   useEffect(() => {
     fetchPendingAuthors();
+    fetchApprovedAuthors();
   }, []);
 
   // 승인 대기 작가 목록 조회
   const fetchPendingAuthors = async () => {
     try {
-      setLoading(true);
       const response = await fetch(`${BASE_URL}/manageAuthors`);
       
       if (response.ok) {
@@ -33,6 +35,22 @@ const AdminPage = () => {
     } catch (error) {
       console.error('승인 대기 작가 목록 조회 실패:', error);
       setError('서버 연결에 실패했습니다.');
+    }
+  };
+
+  // 승인된 작가 목록 조회
+  const fetchApprovedAuthors = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/authors`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setApprovedAuthors(data);
+      } else {
+        console.error('승인된 작가 목록 조회 실패');
+      }
+    } catch (error) {
+      console.error('승인된 작가 목록 조회 실패:', error);
     } finally {
       setLoading(false);
     }
@@ -67,6 +85,7 @@ const AdminPage = () => {
         
         // 목록 새로고침
         fetchPendingAuthors();
+        fetchApprovedAuthors();
         setShowModal(false);
         setSelectedAuthor(null);
       } else {
@@ -180,8 +199,12 @@ const AdminPage = () => {
             borderRadius: '8px',
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             textAlign: 'center',
-            minWidth: '150px'
-          }}>
+            minWidth: '150px',
+            cursor: 'pointer',
+            border: activeTab === 'pending' ? '2px solid #dc3545' : '2px solid transparent'
+          }}
+          onClick={() => setActiveTab('pending')}
+          >
             <h3 style={{
               margin: '0 0 0.5rem 0',
               color: '#666',
@@ -206,9 +229,86 @@ const AdminPage = () => {
               작가
             </p>
           </div>
+
+          <div style={{
+            backgroundColor: '#fff',
+            padding: '1.5rem',
+            borderRadius: '8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            textAlign: 'center',
+            minWidth: '150px',
+            cursor: 'pointer',
+            border: activeTab === 'approved' ? '2px solid #28a745' : '2px solid transparent'
+          }}
+          onClick={() => setActiveTab('approved')}
+          >
+            <h3 style={{
+              margin: '0 0 0.5rem 0',
+              color: '#666',
+              fontSize: '0.9rem',
+              textTransform: 'uppercase'
+            }}>
+              승인된 작가
+            </h3>
+            <p style={{
+              fontSize: '2.5rem',
+              fontWeight: 'bold',
+              color: '#28a745',
+              margin: '0.25rem 0 0 0'
+            }}>
+              {approvedAuthors.length}
+            </p>
+            <p style={{
+              margin: '0.25rem 0 0 0',
+              color: '#999',
+              fontSize: '0.8rem'
+            }}>
+              작가
+            </p>
+          </div>
         </div>
 
-        {/* 승인 대기 작가 목록 */}
+        {/* 탭 네비게이션 */}
+        <div style={{
+          display: 'flex',
+          marginBottom: '2rem',
+          borderBottom: '2px solid #e0e0e0'
+        }}>
+          <button
+            onClick={() => setActiveTab('pending')}
+            style={{
+              padding: '1rem 2rem',
+              backgroundColor: activeTab === 'pending' ? '#dc3545' : 'transparent',
+              color: activeTab === 'pending' ? 'white' : '#666',
+              border: 'none',
+              borderBottom: activeTab === 'pending' ? '2px solid #dc3545' : '2px solid transparent',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              fontWeight: activeTab === 'pending' ? 'bold' : 'normal',
+              marginBottom: '-2px'
+            }}
+          >
+            승인 대기 작가 ({pendingAuthors.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('approved')}
+            style={{
+              padding: '1rem 2rem',
+              backgroundColor: activeTab === 'approved' ? '#28a745' : 'transparent',
+              color: activeTab === 'approved' ? 'white' : '#666',
+              border: 'none',
+              borderBottom: activeTab === 'approved' ? '2px solid #28a745' : '2px solid transparent',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              fontWeight: activeTab === 'approved' ? 'bold' : 'normal',
+              marginBottom: '-2px'
+            }}
+          >
+            승인된 작가 ({approvedAuthors.length})
+          </button>
+        </div>
+
+        {/* 작가 목록 */}
         <section style={{
           backgroundColor: '#fff',
           borderRadius: '8px',
@@ -219,10 +319,10 @@ const AdminPage = () => {
             margin: '0 0 1.5rem 0',
             color: '#333',
             fontSize: '1.5rem',
-            borderBottom: '2px solid #dc3545',
+            borderBottom: `2px solid ${activeTab === 'pending' ? '#dc3545' : '#28a745'}`,
             paddingBottom: '0.5rem'
           }}>
-            승인 대기 작가 목록
+            {activeTab === 'pending' ? '승인 대기 작가 목록' : '승인된 작가 목록'}
           </h2>
           
           {error && (
@@ -239,101 +339,174 @@ const AdminPage = () => {
             </div>
           )}
 
-          {pendingAuthors.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '3rem',
-              color: '#666',
-              fontSize: '1.1rem'
-            }}>
-              승인 대기 중인 작가가 없습니다.
-            </div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-              gap: '1.5rem'
-            }}>
-              {pendingAuthors.map((author) => (
-                <div key={author.id} style={{
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  padding: '1.5rem',
-                  backgroundColor: '#fafafa'
-                }}>
-                  <div>
-                    <h3 style={{
-                      margin: '0 0 0.5rem 0',
-                      color: '#333',
-                      fontSize: '1.2rem'
-                    }}>
-                      {author.name}
-                    </h3>
-                    <p style={{
-                      color: '#666',
-                      margin: '0.25rem 0',
-                      fontSize: '0.9rem'
-                    }}>
-                      {author.email}
-                    </p>
-                    <p style={{
-                      color: '#555',
-                      margin: '0.75rem 0',
-                      lineHeight: '1.4',
-                      fontSize: '0.9rem'
-                    }}>
-                      {author.bio}
-                    </p>
-                    <p style={{
-                      color: '#666',
-                      margin: '0.5rem 0',
-                      fontSize: '0.9rem'
-                    }}>
-                      <strong>대표작:</strong> {author.majorWork}
-                    </p>
-                  </div>
-                  
-                  <div style={{
-                    display: 'flex',
-                    gap: '0.5rem',
-                    marginTop: '1rem',
-                    paddingTop: '1rem',
-                    borderTop: '1px solid #e0e0e0'
+          {activeTab === 'pending' ? (
+            // 승인 대기 작가 목록
+            pendingAuthors.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '3rem',
+                color: '#666',
+                fontSize: '1.1rem'
+              }}>
+                승인 대기 중인 작가가 없습니다.
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+                gap: '1.5rem'
+              }}>
+                {pendingAuthors.map((author) => (
+                  <div key={author.id} style={{
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    padding: '1.5rem',
+                    backgroundColor: '#fafafa'
                   }}>
-                    <button
-                      onClick={() => openActionModal(author, 'approve')}
-                      style={{
-                        flex: 1,
-                        padding: '0.5rem',
+                    <div>
+                      <h3 style={{
+                        margin: '0 0 0.5rem 0',
+                        color: '#333',
+                        fontSize: '1.2rem'
+                      }}>
+                        {author.name}
+                      </h3>
+                      <p style={{
+                        color: '#666',
+                        margin: '0.25rem 0',
+                        fontSize: '0.9rem'
+                      }}>
+                        {author.email}
+                      </p>
+                      <p style={{
+                        color: '#555',
+                        margin: '0.75rem 0',
+                        lineHeight: '1.4',
+                        fontSize: '0.9rem'
+                      }}>
+                        {author.bio}
+                      </p>
+                      <p style={{
+                        color: '#666',
+                        margin: '0.5rem 0',
+                        fontSize: '0.9rem'
+                      }}>
+                        <strong>대표작:</strong> {author.majorWork}
+                      </p>
+                    </div>
+                    
+                    <div style={{
+                      display: 'flex',
+                      gap: '0.5rem',
+                      marginTop: '1rem',
+                      paddingTop: '1rem',
+                      borderTop: '1px solid #e0e0e0'
+                    }}>
+                      <button
+                        onClick={() => openActionModal(author, 'approve')}
+                        style={{
+                          flex: 1,
+                          padding: '0.5rem',
+                          backgroundColor: '#28a745',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.9rem'
+                        }}
+                      >
+                        승인
+                      </button>
+                      <button
+                        onClick={() => openActionModal(author, 'deny')}
+                        style={{
+                          flex: 1,
+                          padding: '0.5rem',
+                          backgroundColor: '#dc3545',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.9rem'
+                        }}
+                      >
+                        거부
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : (
+            // 승인된 작가 목록
+            approvedAuthors.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '3rem',
+                color: '#666',
+                fontSize: '1.1rem'
+              }}>
+                승인된 작가가 없습니다.
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+                gap: '1.5rem'
+              }}>
+                {approvedAuthors.map((author) => (
+                  <div key={author.id} style={{
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    padding: '1.5rem',
+                    backgroundColor: '#f8fff8'
+                  }}>
+                    <div>
+                      <h3 style={{
+                        margin: '0 0 0.5rem 0',
+                        color: '#333',
+                        fontSize: '1.2rem'
+                      }}>
+                        {author.name}
+                      </h3>
+                      <p style={{
+                        color: '#666',
+                        margin: '0.25rem 0',
+                        fontSize: '0.9rem'
+                      }}>
+                        {author.email}
+                      </p>
+                      <p style={{
+                        color: '#555',
+                        margin: '0.75rem 0',
+                        lineHeight: '1.4',
+                        fontSize: '0.9rem'
+                      }}>
+                        {author.bio}
+                      </p>
+                      <p style={{
+                        color: '#666',
+                        margin: '0.5rem 0',
+                        fontSize: '0.9rem'
+                      }}>
+                        <strong>대표작:</strong> {author.majorWork}
+                      </p>
+                      <div style={{
+                        marginTop: '0.5rem',
+                        padding: '0.25rem 0.5rem',
                         backgroundColor: '#28a745',
                         color: 'white',
-                        border: 'none',
                         borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '0.9rem'
-                      }}
-                    >
-                      승인
-                    </button>
-                    <button
-                      onClick={() => openActionModal(author, 'deny')}
-                      style={{
-                        flex: 1,
-                        padding: '0.5rem',
-                        backgroundColor: '#dc3545',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '0.9rem'
-                      }}
-                    >
-                      거부
-                    </button>
+                        fontSize: '0.8rem',
+                        display: 'inline-block'
+                      }}>
+                        승인됨
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )
           )}
         </section>
       </main>
