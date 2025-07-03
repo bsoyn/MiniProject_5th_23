@@ -40,44 +40,25 @@ const BookRegisterPage = () => {
   const [draftToDelete, setDraftToDelete] = useState(null);
 
   // 토큰에서 사용자 정보 가져오기
-  const fetchUserInfo = async () => {
+  const fetchUserInfo = () => {
     try {
-      const accessToken = sessionStorage.getItem('accessToken');
-      
-      if (!accessToken) {
+      const userInfoStr = sessionStorage.getItem('userInfo');
+      if (!userInfoStr) {
         alert('로그인이 필요합니다.');
         navigate('/login');
         return;
       }
-
-      const response = await apiClient.post('/api/token', {}, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
-
+      const userInfo = JSON.parse(userInfoStr);
       setUserInfo({
-        userId: response.userId,
-        userName: response.userName,
+        userId: userInfo.userId,
+        userName: userInfo.userName,
         isLoading: false
       });
-
     } catch (error) {
-      console.error('사용자 정보 가져오기 실패:', error);
-      
-      // 토큰이 유효하지 않은 경우
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        sessionStorage.removeItem('accessToken');
-        alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
-        navigate('/login');
-      } else {
-        alert('사용자 정보를 가져오는데 실패했습니다.');
-        setUserInfo({
-          userId: null,
-          userName: null,
-          isLoading: false
-        });
-      }
+      console.error('사용자 정보 파싱 실패:', error);
+      sessionStorage.removeItem('userInfo');
+      alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+      navigate('/login');
     }
   };
 

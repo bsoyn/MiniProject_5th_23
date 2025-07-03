@@ -1,53 +1,162 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+const BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const AuthorMyPage = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   // 작가 정보
   const [authorInfo, setAuthorInfo] = useState({
-    name: '김작가',
-    email: 'author@example.com',
-    introduction: '소설과 에세이를 주로 쓰는 작가입니다. 일상에서 찾은 작은 이야기들을 글로 풀어내는 것을 좋아합니다.',
-    representativeWork: '시간의 틈',
-    joinDate: '2024-03-10',
-    totalSales: 125000,
-    totalBooks: 5
+    name: '',
+    email: '',
+    introduction: '',
+    representativeWork: '',
+    joinDate: '',
+    totalSales: 0,
+    totalBooks: 0
   });
 
   // 작가의 도서 목록
-  const [authorBooks, setAuthorBooks] = useState([
-    {
-      id: 1,
-      title: '시간의 틈',
-      description: '시간 여행을 소재로 한 SF 소설',
-      price: 4800,
-      publishDate: '2024-06-01',
-      sales: 45,
-      status: '판매중',
-      totalRevenue: 216000
-    },
-    {
-      id: 2,
-      title: '도시의 기억',
-      description: '도시에서 살아가는 사람들의 이야기',
-      price: 5200,
-      publishDate: '2024-08-15',
-      sales: 32,
-      status: '판매중',
-      totalRevenue: 166400
-    },
-    {
-      id: 3,
-      title: '바람의 노래',
-      description: '자연과 인간의 관계를 다룬 에세이',
-      price: 4500,
-      publishDate: '2025-01-20',
-      sales: 18,
-      status: '판매중',
-      totalRevenue: 81000
+  const [authorBooks, setAuthorBooks] = useState([]);
+
+  // 페이지 로드 시 작가 정보 가져오기
+  useEffect(() => {
+    fetchAuthorInfo();
+    fetchAuthorBooks();
+  }, []);
+
+  // JWT 토큰에서 사용자 정보 추출 (개선된 버전)
+  const getUserInfoFromToken = (token) => {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      console.log('JWT Payload:', payload);
+      return {
+        userId: payload.sub || payload.userId,
+        userName: payload.name,
+        userType: payload.type?.[0] || payload.userType
+      };
+    } catch (error) {
+      console.error('토큰 파싱 실패:', error);
+      return null;
     }
-  ]);
+  };
+
+  // 도서 등록 페이지로 이동 (사용자 정보 저장 포함)
+  const handleBookRegister = () => {
+    const token = sessionStorage.getItem('accessToken');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      navigate('/login');
+      return;
+    }
+
+    const userInfo = getUserInfoFromToken(token);
+    if (!userInfo || !userInfo.userId) {
+      alert('사용자 정보를 가져올 수 없습니다.');
+      return;
+    }
+
+    // BookRegisterPage에서 사용할 사용자 정보를 sessionStorage에 저장
+    sessionStorage.setItem('userInfo', JSON.stringify(userInfo));
+    navigate('/bookRegister');
+  };
+
+  // 작가 정보 조회
+  const fetchAuthorInfo = async () => {
+    try {
+      const token = sessionStorage.getItem('accessToken');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      const userInfo = getUserInfoFromToken(token);
+      if (!userInfo || !userInfo.userId) {
+        setError('사용자 정보를 가져올 수 없습니다. 다시 로그인해주세요.');
+        return;
+      }
+
+      const response = await fetch(`${BASE_URL}/authors/${userInfo.userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAuthorInfo({
+          name: data.name || userInfo.userName || '작가',
+          email: data.email || '',
+          introduction: data.bio || '작가 소개를 입력해주세요.',
+          representativeWork: data.majorWork || '대표작을 입력해주세요.',
+          joinDate: data.createdAt || new Date().toISOString(),
+          totalSales: 0,
+          totalBooks: authorBooks.length
+        });
+      } else if (response.status === 401) {
+        sessionStorage.removeItem('accessToken');
+        sessionStorage.removeItem('userInfo');
+        navigate('/login');
+      } else if (response.status === 404) {
+        setError('작가 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.');
+      } else {
+        setError('작가 정보를 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
+      }
+    } catch (error) {
+      console.error('작가 정보 조회 실패:', error);
+      setError('서버 연결에 실패했습니다. 인터넷 연결을 확인해주세요.');
+    }
+  };
+
+  // 작가의 도서 목록 조회
+  const fetchAuthorBooks = async () => {
+    try {
+      const token = sessionStorage.getItem('accessToken');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      const response = await fetch(`${BASE_URL}/readMyBooks`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Spring Data REST 응답 형식에 맞게 처리
+        const books = data._embedded ? data._embedded.readMyBooks : [];
+        setAuthorBooks(books || []);
+        // 도서 수 업데이트
+        setAuthorInfo(prev => ({
+          ...prev,
+          totalBooks: books.length
+        }));
+      } else if (response.status === 401) {
+        sessionStorage.removeItem('accessToken');
+        navigate('/login');
+      } else {
+        console.error('도서 목록 조회 실패');
+      }
+    } catch (error) {
+      console.error('도서 목록 조회 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 로그아웃
+  const handleLogout = () => {
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('userInfo');
+    navigate('/login');
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -57,6 +166,27 @@ const AuthorMyPage = () => {
       default: return '#6c757d';
     }
   };
+
+  // 로딩 상태 처리
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#f8f9fa',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'Arial, sans-serif'
+      }}>
+        <div style={{
+          fontSize: '1.2rem',
+          color: '#666'
+        }}>
+          로딩 중...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -119,11 +249,40 @@ const AuthorMyPage = () => {
             >
               홈으로
             </button>
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '0.9rem'
+              }}
+            >
+              로그아웃
+            </button>
           </nav>
         </div>
       </header>
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
+        {/* 에러 메시지 */}
+        {error && (
+          <div style={{
+            backgroundColor: '#f8d7da',
+            color: '#721c24',
+            padding: '0.8rem',
+            borderRadius: '4px',
+            marginBottom: '1rem',
+            fontSize: '0.9rem',
+            border: '1px solid #f5c6cb'
+          }}>
+            {error}
+          </div>
+        )}
+
         {/* 페이지 제목 */}
         <div style={{
           display: 'flex',
@@ -140,7 +299,7 @@ const AuthorMyPage = () => {
             작가 페이지
           </h2>
           <button
-            onClick={() => navigate('/bookRegister')}
+            onClick={handleBookRegister}
             style={{
               padding: '0.8rem 1.5rem',
               backgroundColor: '#28a745',
@@ -243,7 +402,7 @@ const AuthorMyPage = () => {
                 }}>
                   <span style={{ color: '#666' }}>총 판매량</span>
                   <span style={{ fontWeight: 'bold', color: '#007bff' }}>
-                    {authorBooks.reduce((sum, book) => sum + book.sales, 0)}권
+                    {authorBooks.length}권
                   </span>
                 </div>
               </div>
@@ -256,7 +415,7 @@ const AuthorMyPage = () => {
                 }}>
                   <span style={{ color: '#666' }}>총 수익</span>
                   <span style={{ fontWeight: 'bold', color: '#ffc107' }}>
-                    {authorBooks.reduce((sum, book) => sum + book.totalRevenue, 0).toLocaleString()}P
+                    {authorBooks.reduce((sum, book) => sum + (book.price || 0), 0).toLocaleString()}P
                   </span>
                 </div>
               </div>
@@ -305,21 +464,21 @@ const AuthorMyPage = () => {
                             {book.title}
                           </h4>
                           <p style={{ color: '#666', marginBottom: '0.5rem' }}>
-                            {book.description}
+                            {book.summary || '설명 없음'}
                           </p>
                           <p style={{ color: '#999', fontSize: '0.8rem' }}>
-                            등록일: {new Date(book.publishDate).toLocaleDateString()}
+                            카테고리: {book.category || '미분류'}
                           </p>
                         </div>
                         <div style={{
-                          backgroundColor: getStatusColor(book.status),
+                          backgroundColor: getStatusColor(book.status || '판매중'),
                           color: '#fff',
                           padding: '0.3rem 0.8rem',
                           borderRadius: '20px',
                           fontSize: '0.8rem',
                           fontWeight: '500'
                         }}>
-                          {book.status}
+                          {book.status || '판매중'}
                         </div>
                       </div>
 
@@ -336,35 +495,38 @@ const AuthorMyPage = () => {
                             가격
                           </div>
                           <div style={{ fontWeight: 'bold', color: '#333' }}>
-                            {book.price.toLocaleString()}P
+                            {book.price ? book.price.toLocaleString() : '0'}P
                           </div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
                           <div style={{ color: '#666', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
-                            판매량
+                            카테고리
                           </div>
                           <div style={{ fontWeight: 'bold', color: '#007bff' }}>
-                            {book.sales}권
+                            {book.category || '미분류'}
                           </div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
                           <div style={{ color: '#666', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
-                            수익
+                            상태
                           </div>
                           <div style={{ fontWeight: 'bold', color: '#28a745' }}>
-                            {book.totalRevenue.toLocaleString()}P
+                            등록됨
                           </div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                          <button style={{
-                            padding: '0.4rem 0.8rem',
-                            backgroundColor: '#6c757d',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '0.8rem'
-                          }}>
+                          <button 
+                            onClick={() => navigate(`/bookEdit/${book.id}`)}
+                            style={{
+                              padding: '0.4rem 0.8rem',
+                              backgroundColor: '#6c757d',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '0.8rem'
+                            }}
+                          >
                             수정
                           </button>
                         </div>
@@ -381,7 +543,7 @@ const AuthorMyPage = () => {
                   <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📝</div>
                   <p>아직 등록한 도서가 없습니다.</p>
                   <button
-                    onClick={() => navigate('/bookRegister')}
+                    onClick={handleBookRegister}
                     style={{
                       marginTop: '1rem',
                       padding: '0.8rem 1.5rem',
@@ -401,7 +563,7 @@ const AuthorMyPage = () => {
         </div>
       </div>
     </div>
-  );
+  )
 };
 
 export default AuthorMyPage;
