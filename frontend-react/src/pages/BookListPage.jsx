@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { bookService } from '../bookService';
+import { bookService } from '../bookService.jsx';
 
 const BookListPage = () => {
   const navigate = useNavigate();
@@ -18,95 +18,14 @@ const BookListPage = () => {
   // 카테고리 목록
   const categories = ['전체', '소설', 'SF', '로맨스', '에세이', '역사', '자기계발'];
 
-  // 임시 도서 데이터 (실제로는 API에서 가져올 것)
-  const sampleBooks = [
-    {
-      id: 1,
-      title: '별을 삼킨 소년',
-      author: '김작가',
-      category: 'SF',
-      price: 5000,
-      imageUrl: 'https://via.placeholder.com/200x280/333333/ffffff?text=별을+삼킨+소년',
-      description: '소년은 어느 조용한 밤, 마당에 떨어진 작은 별 하나를 발견했다...',
-      publishDate: '2025-06-28',
-      views: 1250,
-      rating: 4.7,
-      reviewCount: 89
-    },
-    {
-      id: 2,
-      title: '미래의 기억',
-      author: '이작가',
-      category: 'SF',
-      price: 4500,
-      imageUrl: 'https://via.placeholder.com/200x280/444444/ffffff?text=미래의+기억',
-      description: '시간을 거슬러 올라가는 기억에 관한 이야기...',
-      publishDate: '2025-06-25',
-      views: 980,
-      rating: 4.5,
-      reviewCount: 67
-    },
-    {
-      id: 3,
-      title: '도시의 밤',
-      author: '박작가',
-      category: '소설',
-      price: 5500,
-      imageUrl: 'https://via.placeholder.com/200x280/555555/ffffff?text=도시의+밤',
-      description: '도시에서 살아가는 사람들의 이야기...',
-      publishDate: '2025-06-20',
-      views: 1450,
-      rating: 4.8,
-      reviewCount: 123
-    },
-    {
-      id: 4,
-      title: '바람의 노래',
-      author: '최작가',
-      category: '에세이',
-      price: 4000,
-      imageUrl: 'https://via.placeholder.com/200x280/666666/ffffff?text=바람의+노래',
-      description: '자연과 인간의 관계를 다룬 에세이...',
-      publishDate: '2025-06-15',
-      views: 720,
-      rating: 4.3,
-      reviewCount: 45
-    },
-    {
-      id: 5,
-      title: '시간의 틈',
-      author: '정작가',
-      category: 'SF',
-      price: 4800,
-      imageUrl: 'https://via.placeholder.com/200x280/777777/ffffff?text=시간의+틈',
-      description: '시간 여행을 소재로 한 SF 소설...',
-      publishDate: '2025-06-10',
-      views: 890,
-      rating: 4.6,
-      reviewCount: 78
-    },
-    {
-      id: 6,
-      title: '별빛 여행',
-      author: '강작가',
-      category: '로맨스',
-      price: 5200,
-      imageUrl: 'https://via.placeholder.com/200x280/888888/ffffff?text=별빛+여행',
-      description: '별빛 아래서 펼쳐지는 로맨스 이야기...',
-      publishDate: '2025-06-05',
-      views: 1100,
-      rating: 4.4,
-      reviewCount: 92
-    }
-  ];
-
   // 도서 목록 불러오기
   useEffect(() => {
     const loadBooks = async () => {
       setLoading(true);
       try {
         // 실제로는 API 호출
-        const books = await bookService.getBooks();
+        const books = await bookService.getBooks(0);
+        console.log("응답 확인 : ", books[0]);
         
         // 임시로 샘플 데이터 사용
         //await new Promise(resolve => setTimeout(resolve, 1000)); // 로딩 시뮬레이션
@@ -124,8 +43,7 @@ const BookListPage = () => {
   // 필터링 및 정렬된 도서 목록
   const filteredAndSortedBooks = books
     .filter(book => {
-      const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           book.author.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesCategory = selectedCategory === '전체' || book.category === selectedCategory;
       return matchesSearch && matchesCategory;
     })
@@ -509,7 +427,7 @@ const BookListPage = () => {
                     marginBottom: '0.5rem',
                     fontSize: '0.9rem'
                   }}>
-                    by {book.author}
+                    by {book.authorName}
                   </p>
 
                   <p style={{

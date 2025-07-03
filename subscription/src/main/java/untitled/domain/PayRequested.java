@@ -18,6 +18,7 @@ public class PayRequested extends AbstractEvent {
 
     public PayRequested(Subscribe aggregate) {
         super(aggregate);
+        this.readerId = aggregate.getReaderId(); 
     }
 
     public PayRequested() {

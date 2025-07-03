@@ -1,13 +1,11 @@
-package untitled.domain;
+package untitled.repository;
 
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-import untitled.domain.*;
 
 import java.util.List;
-import untitled.domain.ManuscriptStatus;
-import untitled.domain.Manuscript;
-
+import untitled.domain.aggregate.Manuscript;
+import untitled.domain.aggregate.ManuscriptStatus;
 //<<< PoEAA / Repository
 @RepositoryRestResource(
     collectionResourceRel = "manuscripts",

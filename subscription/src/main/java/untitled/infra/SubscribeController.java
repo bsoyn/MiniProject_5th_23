@@ -13,11 +13,17 @@ import untitled.domain.*;
 //<<< Clean Arch / Inbound Adaptor
 
 @RestController
-// @RequestMapping(value="/subscribes")
+@RequestMapping(value="/subscribes")
 @Transactional
 public class SubscribeController {
 
     @Autowired
     SubscribeRepository subscribeRepository;
+
+    @PostMapping
+    public Subscribe create(@RequestBody Subscribe subscribe) {
+        // save()를 호출하면 @PostPersist 이벤트가 트리거됨
+        return subscribeRepository.save(subscribe);
+    }
 }
 //>>> Clean Arch / Inbound Adaptor
