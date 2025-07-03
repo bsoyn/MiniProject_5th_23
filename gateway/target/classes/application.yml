@@ -34,7 +34,7 @@ spring:
           predicates:
             - Path=/purchasedBooks/**, 
         - id: subscription
-          uri: http://localhost:8088
+          uri: http://localhost:8093
           predicates:
             - Path=/subscribes/**, 
         - id: payment
@@ -69,7 +69,7 @@ spring:
               - "*"
             allowCredentials: true
 jwt:
-  secret: alEsuzfbMMJ3rjaiNfPnfHABuTWApPBnhfgmItTC5eOwhpDOmcqo+hdR9ztmU9dp
+  secret: ${JWT_SECRET:alEsuzfbMMJ3rjaiNfPnfHABuTWApPBnhfgmItTC5eOwhpDOmcqo+hdR9ztmU9dp}
   access-token-validity-in-seconds: 3600
 
 ---
@@ -137,6 +137,8 @@ spring:
             allowedHeaders:
               - "*"
             allowCredentials: true
-
+jwt:
+  secret: ${JWT_SECRET:alEsuzfbMMJ3rjaiNfPnfHABuTWApPBnhfgmItTC5eOwhpDOmcqo+hdR9ztmU9dp}
+  access-token-validity-in-seconds: 3600
 server:
   port: 8080
