@@ -71,6 +71,11 @@ spring:
 jwt:
   secret: ${JWT_SECRET:alEsuzfbMMJ3rjaiNfPnfHABuTWApPBnhfgmItTC5eOwhpDOmcqo+hdR9ztmU9dp}
   access-token-validity-in-seconds: 3600
+client:
+  urls:
+    author: http://localhost:8082
+    reader: http://localhost:8084
+    admin: http://localhost:8085
 
 ---
 
@@ -137,6 +142,12 @@ spring:
             allowedHeaders:
               - "*"
             allowCredentials: true
+
+client:
+  urls:
+    author: http://author:8080
+    reader: hhttp://reader:8080
+    admin: http://manager:8080
 jwt:
   secret: ${JWT_SECRET:alEsuzfbMMJ3rjaiNfPnfHABuTWApPBnhfgmItTC5eOwhpDOmcqo+hdR9ztmU9dp}
   access-token-validity-in-seconds: 3600
