@@ -18,6 +18,7 @@ import untitled.domain.PurchasedBook;
 import untitled.domain.PurchasedBookRepository;
 import untitled.domain.PurchasedCompleted;
 import untitled.domain.SuggestPurchase;
+import untitled.domain.PointPaymentRequested;
 
 @Service
 public class PurchaseService {
@@ -31,47 +32,81 @@ public class PurchaseService {
         book.setReaderId(command.getReaderId());
         book.setBookId(command.getBookId());
         book.setStatus("REQUESTED");
+        book.setPrice(command.getPrice());
 
         repository.save(book); // @PostPersist에서 이벤트 발행됨
         return book;
     }   
 
-    // '도서 구매 완료 알림' policy
-    public void handleBuyApproved(BuyApproved event) {
-        // 'BuyApproved' 이벤트로부터 readerId, bookId 받아옴
+    // 도서 구매 성공/실패 관련 policy
+    public void handlePointPaymentRequested(PointPaymentRequested event) {
+        // 'PointPaymentRequested' 이벤트로부터 readerId, bookId, 성공여부(isPurchase) 받아옴
         Long readerId = event.getReaderId();
         Long bookId = event.getBookId();
+        boolean purchase = event.isPurchase();
 
-        repository.findByReaderIdAndBookId(readerId, bookId)
-            .ifPresent(book -> {
-                // 1. 상태 변경 후 정보 저장
-                book.markCompleted();
-                repository.save(book);
+        // 받은 이벤트가 구독권 구매 관련이 아니라, 도서 구매 관련인 경우
+        if (bookId != null) {
+            // 내가 구매를 요청한 도서인지 확인
+            repository.findByReaderIdAndBookId(readerId, bookId)
+                .ifPresent(book -> {
+                    if (purchase == true) { // <구매 성공>
+                        // 1. 상태 변경 후 정보 저장
+                        book.markCompleted();
+                        repository.save(book);
 
-                // 2. '구매 완료됨' 이벤트 발행
-                PurchasedCompleted completed = new PurchasedCompleted(book);
-                completed.publishAfterCommit();
-            });
+                        // 2. '구매 완료됨' 이벤트 발행
+                        PurchasedCompleted completed = new PurchasedCompleted(book);
+                        completed.publishAfterCommit();
+                    } else { // <구매 실패>
+                        // 1. 상태 변경 후 정보 저장
+                        book.markFailed();
+                        repository.save(book);
+
+                        // 2. '구매 실패됨' 이벤트 발행
+                        PurchaseFailed failed = new PurchaseFailed(book);
+                        failed.publishAfterCommit();
+                    }
+                });            
+        }
     }
 
-    // '도서 구매 실패 알림' policy
-    public void handleBuyRejected(BuyRejected event) {
-        // 'BuyApproved' 이벤트로부터 readerId, bookId 받아옴
-        Long readerId = event.getReaderId();
-        Long bookId = event.getBookId();
+    // // '도서 구매 완료 알림' policy
+    // public void handleBuyApproved(BuyApproved event) {
+    //     // 'BuyApproved' 이벤트로부터 readerId, bookId 받아옴
+    //     Long readerId = event.getReaderId();
+    //     Long bookId = event.getBookId();
 
-        repository.findByReaderIdAndBookId(readerId, bookId)
-            .ifPresent(book -> {
-                // 1. 상태 변경 후 정보 저장
-                book.markFailed();
-                repository.save(book);
+    //     repository.findByReaderIdAndBookId(readerId, bookId)
+    //         .ifPresent(book -> {
+    //             // 1. 상태 변경 후 정보 저장
+    //             book.markCompleted();
+    //             repository.save(book);
 
-                // 2. '구매 실패됨' 이벤트 발행
-                PurchaseFailed failed = new PurchaseFailed(book);
-                failed.publishAfterCommit();
-            });
+    //             // 2. '구매 완료됨' 이벤트 발행
+    //             PurchasedCompleted completed = new PurchasedCompleted(book);
+    //             completed.publishAfterCommit();
+    //         });
+    // }
 
-    }
+    // // '도서 구매 실패 알림' policy
+    // public void handleBuyRejected(BuyRejected event) {
+    //     // 'BuyApproved' 이벤트로부터 readerId, bookId 받아옴
+    //     Long readerId = event.getReaderId();
+    //     Long bookId = event.getBookId();
+
+    //     repository.findByReaderIdAndBookId(readerId, bookId)
+    //         .ifPresent(book -> {
+    //             // 1. 상태 변경 후 정보 저장
+    //             book.markFailed();
+    //             repository.save(book);
+
+    //             // 2. '구매 실패됨' 이벤트 발행
+    //             PurchaseFailed failed = new PurchaseFailed(book);
+    //             failed.publishAfterCommit();
+    //         });
+
+    // }
 
     // '구매한 도서인지 확인' policy
     public void handleBookAccessRequest(BookAccessRequested event) {
@@ -85,6 +120,7 @@ public class PurchaseService {
             // 구매 내역이 있으면 'PurchaseBookConfirmed' 이벤트 발행
             PurchasedBook purchasedBook = purchasedOpt.get();
             PurchaseBookConfirmed confirmed = new PurchaseBookConfirmed(purchasedBook);
+            confirmed.setId(event.getId());
             confirmed.publishAfterCommit();
         } else {
             // 구매 내역이 없으면 'NotPurchaseBookConfirmed' 이벤트 발행
