@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiCall } from '../config/api';
 
 const ReaderMyPage = () => {
   const navigate = useNavigate();
@@ -25,14 +26,37 @@ const ReaderMyPage = () => {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [chargeAmount, setChargeAmount] = useState('');
 
-  const handlePointCharge = (amount) => {
-    setUserInfo(prev => ({
-      ...prev,
-      points: prev.points + amount
-    }));
-    setShowChargeModal(false);
-    setChargeAmount('');
-    alert(`${amount.toLocaleString()}P가 충전되었습니다!`);
+  const handlePointCharge = async (amount) => {
+    try {
+      const response = await apiCall(`/points/${userInfo.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          readerId: userInfo.id,
+          point: amount,
+          cost: amount,
+          impUid: 'test_12345' // 추후 실제 impUid로  -> 하지만 이번엔 안써
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setUserInfo(prev => ({
+          ...prev,
+          points: result.totalPoint // DB 기준 최신 포인트 반영
+        }));
+        alert(`${amount.toLocaleString()}P가 충전되었습니다!`);
+      } else {
+        const errorText = await response.text();
+        console.error('충전 실패:', errorText);
+        alert('포인트 충전에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('API 오류:', error);
+      alert('서버 또는 네트워크 오류가 발생했습니다.');
+    } finally {
+      setShowChargeModal(false);
+      setChargeAmount('');
+    }
   };
 
   const handleSubscriptionPurchase = () => {

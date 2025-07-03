@@ -1,10 +1,12 @@
 package untitled.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @EnableWebSecurity
@@ -12,19 +14,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http
-            .csrf().disable()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and()
+        // Gateway에서 인가를 처리하므로 모든 요청을 허용하도록 설정
+        http.csrf().disable()
             .authorizeRequests()
-            .antMatchers("/authors/**").permitAll()  // Author API 허용
-            .antMatchers("/actuator/**").permitAll() // Health check 허용
-            .antMatchers("/h2-console/**").permitAll() // H2 Console 허용 (개발용)
-            .antMatchers("/error").permitAll() // 에러 페이지 허용
-            .anyRequest().authenticated() // 나머지는 인증 필요
+            .anyRequest().permitAll()
             .and()
-            .httpBasic().disable()
-            .formLogin().disable()
-            .headers().frameOptions().disable(); // H2 Console을 위한 설정
+            .headers().frameOptions().disable();
+    }
+    
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 } 
