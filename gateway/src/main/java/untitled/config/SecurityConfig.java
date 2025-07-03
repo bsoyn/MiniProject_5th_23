@@ -43,8 +43,6 @@ public class SecurityConfig {
                     // --- 2. 인증(Authentication)이 필요한 경로 설정 ---
                     // 회원 목록 조회는 GET 메소드에 대해 인증을 요구
                     .pathMatchers(HttpMethod.GET, "/managerReaders").permitAll()
-                    .pathMatchers(HttpMethod.GET, "/managerReaders/**").hasRole("READER")
-                    
                     
                     .anyExchange().permitAll()
                 .and()
