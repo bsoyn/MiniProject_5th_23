@@ -16,7 +16,7 @@ public class ReaderJoined extends AbstractEvent {
     private String password;
     private String name;
     private Boolean isSubscribe;
-    private int isKT;
+    private Boolean isKT;
 
     public ReaderJoined(ManagerReader aggregate) {
         super(aggregate);

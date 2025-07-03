@@ -50,10 +50,10 @@ const ReaderMyPage = () => {
         });
 
         //api url 수정
-        // const pointResponse = await fetch(`/points/${currentUserId}`, {
-        //   method: 'GET',
-        //   headers: headers,
-        // });
+        const pointResponse = await fetch(`/points/reader/${currentUserId}`, {
+          method: 'GET',
+          headers: headers,
+        });
         // const subscriptionResponse = await fetch(`/subscribes/${currentUserId}`,{
         //   method: 'GET',
         //   headers: headers,
@@ -63,13 +63,13 @@ const ReaderMyPage = () => {
         //   headers: headers,
         // });
 
-        // console.log(pointResponse);
+        console.log(pointResponse);
         // console.log(subscriptionResponse);
         // console.log(booksResponse);
 
         const userData = await userResponse.json();
-        const pointData = {totalPoint:1}; //pointData를 받아오지 못하는 상태라서 임의로 값을 부여해둠(오류가 생김)
-        // const pointData = await pointResponse.json();
+        // const pointData = {totalPoint:1}; //pointData를 받아오지 못하는 상태라서 임의로 값을 부여해둠(오류가 생김)
+        const pointData = await pointResponse.json();
         // const subscriptionData = await subscriptionResponse.json();
         // const booksData = await booksResponse.json();
 
