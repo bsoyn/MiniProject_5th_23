@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ValidationRequest {
-    private String email;
-    private String password;
+public class ValidationResponse {
+    private boolean isValid;
+    private String userId;
+    private String userName;
 } 
