@@ -20,19 +20,9 @@ public class Subscribe {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
     private Long readerId;
-
     private LocalDate subscribeStartDate;
-
     private LocalDate subscribeEndDate;
-
-    @PostPersist
-    public void onPostPersist() {
-        System.out.println(">>> Subscribe persisted: " + this);
-        PayRequested payRequested = new PayRequested(this);
-        payRequested.publishAfterCommit();
-    }
 
     public static SubscribeRepository repository() {
         SubscribeRepository subscribeRepository = SubscriptionApplication.applicationContext.getBean(
@@ -41,12 +31,14 @@ public class Subscribe {
         return subscribeRepository;
     }
 
+    // Point로 부터 구독 성공 실패 여부 확인
     public static void subscribeRequest(PointPaymentRequested event) {
         if (event.getBookId() != null) {
             // 도서 구매 요청은 무시
             return;
         }
 
+        // Purchase로 성공 실패 판단
         if (Boolean.TRUE.equals(event.getPurchase())) {
             subscribeCompleteAlert(event);
         } else {
@@ -54,9 +46,21 @@ public class Subscribe {
         }
     }
 
+    // 구독 성공 시
     public static void subscribeCompleteAlert(PointPaymentRequested event) {
-        Subscribe subscribe = new Subscribe();
-        subscribe.setReaderId(event.getReaderId());
+        Optional<Subscribe> existingSubscribe = repository().findByReaderId(event.getReaderId());
+        Subscribe subscribe;
+
+        if (existingSubscribe.isPresent()) {
+            subscribe = existingSubscribe.get();
+            System.out.println("기존 구독 객체 업데이트: " + subscribe.getId());
+        } else {
+            subscribe = new Subscribe();
+            subscribe.setReaderId(event.getReaderId());
+            System.out.println("새 구독 객체 생성: " + subscribe.getReaderId());
+        }
+
+        // 구독 성공 시 시작일과 종료일 업데이트
         subscribe.setSubscribeStartDate(LocalDate.now());
         subscribe.setSubscribeEndDate(LocalDate.now().plusMonths(1));
 
@@ -68,16 +72,36 @@ public class Subscribe {
         System.out.println("구독 완료 이벤트 발행: " + completedEvent);
     }
 
+    // 구독 실패 시
     public static void subscribeFailAlert(PointPaymentRequested event) {
+        Optional<Subscribe> existingSubscribe = repository().findByReaderId(event.getReaderId());
+        Subscribe subscribe;
+
+        if (existingSubscribe.isPresent()) {
+            subscribe = existingSubscribe.get();
+            System.out.println("기존 구독 객체 업데이트 (실패): " + subscribe.getId());
+        } else {
+            subscribe = new Subscribe();
+            subscribe.setReaderId(event.getReaderId());
+            System.out.println("새 구독 객체 생성 (실패): " + subscribe.getReaderId());
+        }
+
+        // 구독 실패 시 startdate와 enddate를 null로 설정
+        subscribe.setSubscribeStartDate(null);
+        subscribe.setSubscribeEndDate(null);
+
+        repository().save(subscribe);
+
         SubscriptionFailed failedEvent = new SubscriptionFailed();
         failedEvent.setReaderId(event.getReaderId());
         failedEvent.setReason("포인트 부족으로 구독 실패");
 
         failedEvent.publishAfterCommit();
 
-        System.out.println("구독 실패 이벤트 발행: " + failedEvent);
+        System.out.println("구독 실패 이벤트 발행 및 실패 기록 생성: " + failedEvent);
     }
     
+    // 도서 열람 시 구독 여부 확인
     public static void subscriptionValidCheck(
         BookAccessRequested bookAccessRequested
     ) {
