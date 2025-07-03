@@ -87,3 +87,13 @@ spring:
 jwt:
   secret: b2f52f5c3b0011a7aa99c73e3e714e8436867855efc0c24fc2a753752415fd10
   access-token-validity-in-seconds: 3600
+
+eureka:
+  client:
+    register-with-eureka: true       # Eureka에 자신 등록
+    fetch-registry: true             # 다른 서비스 탐색 허용
+    service-url:
+      defaultZone: http://130.107.221.205:8761/eureka/  # 실제 Eureka 서버 주소
+
+  instance:
+    prefer-ip-address: true          # IP 기준 등록 (도커 환경에서는 필수)

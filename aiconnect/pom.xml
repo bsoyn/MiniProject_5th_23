@@ -84,6 +84,12 @@
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+
+
 		<!-- cucumber test -->
 		<dependency>
 			<groupId>io.cucumber</groupId>
@@ -110,7 +116,7 @@
 			<dependency>
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>${spring-cloud.version}</version>
+				<version>Hoxton.SR9</version> <!-- 또는 Hoxton.SR8 -->
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
