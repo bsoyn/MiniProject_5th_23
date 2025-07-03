@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const AUTHOR_API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 const RegisterPage = () => {
   const navigate = useNavigate();
   const [userType, setUserType] = useState('READER'); // 'reader' or 'author'
@@ -123,15 +125,14 @@ const RegisterPage = () => {
         isKT: isKtMember,
       });
     } else if (userType === 'AUTHOR') {
-      endpoint = '/api/auth/register/author';
-      const authorFormData = new FormData();
-      authorFormData.append('name', formData.name);
-      authorFormData.append('email', formData.email);
-      authorFormData.append('password', formData.password);
-      authorFormData.append('introduction', formData.introduction);
-      authorFormData.append('representativeWork', formData.representative_work);
-      authorFormData.append('portfolio', formData.portfolio);
-      body = authorFormData;
+      endpoint = `${AUTHOR_API_BASE_URL}/authors`;
+      body = JSON.stringify({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        introduction: formData.introduction,
+        representativeWork: formData.representative_work
+      });
     }
 
     try {
