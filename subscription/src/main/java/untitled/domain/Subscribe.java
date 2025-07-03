@@ -28,6 +28,7 @@ public class Subscribe {
 
     @PostPersist
     public void onPostPersist() {
+        System.out.println(">>> Subscribe persisted: " + this);
         PayRequested payRequested = new PayRequested(this);
         payRequested.publishAfterCommit();
     }
@@ -69,7 +70,8 @@ public class Subscribe {
     ) {
         Long readerId = bookAccessRequested.getReaderId();
         Long bookId = bookAccessRequested.getBookId();
-
+        Long Id = bookAccessRequested.getId();
+        
         Optional<Subscribe> optional = repository().findByReaderId(readerId);
 
         if (optional.isPresent()) {
@@ -77,10 +79,10 @@ public class Subscribe {
 
             if (subscribe.getSubscribeEndDate() != null &&
                 subscribe.getSubscribeEndDate().isAfter(LocalDate.now())) {
-                SubscriptionValidChecked event = new SubscriptionValidChecked(subscribe, bookId, true);
+                SubscriptionValidChecked event = new SubscriptionValidChecked(Id ,readerId, bookId, true);
                 event.publishAfterCommit();
             } else {
-                SubscriptionFinished event = new SubscriptionFinished(subscribe, bookId, false);
+                SubscriptionFinished event = new SubscriptionFinished(Id, readerId, bookId, false);
                 event.publishAfterCommit();
             }
         } else {
