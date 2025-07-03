@@ -25,6 +25,7 @@ public class PurchasedBook {
     
     private Long readerId;
     private Long bookId;
+    private int price; // 가격도 보내야 함
     private String status; // "REQUESTED", "COMPLETED", "FAILED"
 
     @PostPersist
