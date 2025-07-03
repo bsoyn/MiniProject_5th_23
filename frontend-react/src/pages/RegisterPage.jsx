@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const AUTHOR_API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 const RegisterPage = () => {
   const navigate = useNavigate();
   const [userType, setUserType] = useState('READER'); // 'reader' or 'author'
@@ -123,21 +125,65 @@ const RegisterPage = () => {
         isKT: isKtMember,
       });
     } else if (userType === 'AUTHOR') {
-      endpoint = '/api/auth/register/author';
-      const authorFormData = new FormData();
-      authorFormData.append('name', formData.name);
-      authorFormData.append('email', formData.email);
-      authorFormData.append('password', formData.password);
-      authorFormData.append('introduction', formData.introduction);
-      authorFormData.append('representativeWork', formData.representative_work);
-      authorFormData.append('portfolio', formData.portfolio);
-      body = authorFormData;
+      endpoint = '/authors';
+      
+      // 파일을 Base64로 인코딩하는 함수
+      const fileToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = error => reject(error);
+        });
+      };
+
+      // 비동기 함수로 파일 처리
+      const createAuthorBody = async () => {
+        if (formData.portfolio) {
+          try {
+            const base64Data = await fileToBase64(formData.portfolio);
+            return JSON.stringify({
+              name: formData.name,
+              email: formData.email,
+              password: formData.password,
+              bio: formData.introduction,
+              majorWork: formData.representative_work,
+              portfolio: {
+                fileName: formData.portfolio.name,
+                file: base64Data
+              }
+            });
+          } catch (error) {
+            console.error('파일 인코딩 오류:', error);
+            throw new Error('파일 처리 중 오류가 발생했습니다.');
+          }
+        } else {
+          return JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            bio: formData.introduction,
+            majorWork: formData.representative_work,
+            portfolio: {
+              fileName: "portfolio.pdf",
+              file: "https://example.com/portfolio.pdf"
+            }
+          });
+        }
+      };
+
+      try {
+        body = await createAuthorBody();
+      } catch (error) {
+        setErrors({ api: error.message });
+        return;
+      }
     }
 
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: userType === 'READER' ? { 'Content-Type': 'application/json' } : {},
+        headers: { 'Content-Type': 'application/json' },
         body: body,
       });
 
@@ -362,32 +408,35 @@ const RegisterPage = () => {
             )}
           </div>
 
-          <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center' }}>
-            <input
-              type="checkbox"
-              name="isKtMember"
-              checked={isKtMember}
-              onChange={handleChange}
-              id="kt-member-checkbox"
-              style={{
-                width: '1.2rem',
-                height: '1.2rem',
-                marginRight: '0.5rem',
-                cursor: 'pointer'
-              }}
-            />
-            <label 
-              htmlFor="kt-member-checkbox"
-              style={{
-                color: '#333',
-                fontSize: '0.9rem',
-                fontWeight: '500',
-                cursor: 'pointer'
-              }}
-            >
-              KT 회원입니다.
-            </label>
-          </div>
+          {/* KT 회원 체크박스 - 독자만 표시 */}
+          {userType === 'READER' && (
+            <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center' }}>
+              <input
+                type="checkbox"
+                name="isKtMember"
+                checked={isKtMember}
+                onChange={handleChange}
+                id="kt-member-checkbox"
+                style={{
+                  width: '1.2rem',
+                  height: '1.2rem',
+                  marginRight: '0.5rem',
+                  cursor: 'pointer'
+                }}
+              />
+              <label 
+                htmlFor="kt-member-checkbox"
+                style={{
+                  color: '#333',
+                  fontSize: '0.9rem',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                KT 회원입니다.
+              </label>
+            </div>
+          )}
 
           {/* 작가 전용 필드 */}
           {userType === 'AUTHOR' && (

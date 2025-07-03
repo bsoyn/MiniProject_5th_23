@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: purchasebook
-          image: "username/purchasebook:latest"
+          image: "sbells/purchasebook:20250703"
           ports:
             - containerPort: 8080
           readinessProbe:

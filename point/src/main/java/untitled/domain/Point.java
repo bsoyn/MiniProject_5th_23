@@ -57,18 +57,19 @@ public class Point {
     public static void givepoint(ReaderJoined readerJoined) {
         Point point = new Point();
         point.setReaderId(readerJoined.getId());
- 
-        int basePoint = (readerJoined.getIsKT() == true) ? 5000 : 1000;
+        int basePoint = Boolean.TRUE.equals(readerJoined.getIsKT()) ? 5000 : 1000;
         point.setPoint(basePoint);
- 
+        point.setImpUid("welcome");
+        point.setCost(0);
+        point.setPrice(0);
         repository().save(point);
- 
     }
  
     // 수정 완료  -> 결제 요청 보냈어! publish 했어!! 해연님
     public static void readRemainingPoint(PurchaseBookRequested purchaseBookRequested, Point point) {
         //implement business logic here:
-        // 포인트로 도서 결제 요청 이벤트 발행
+
+      // 포인트로 도서 결제 요청 이벤트 발행
         RemainingPointChecked remainingPointChecked = new RemainingPointChecked();
         remainingPointChecked.setReaderId(purchaseBookRequested.getReaderId());
         remainingPointChecked.setPoint(point.getPoint());
@@ -87,12 +88,12 @@ public class Point {
         if (remainingPointChecked.getPoint() >= remainingPointChecked.getPrice()) {
             point.setPoint(point.getPoint() - remainingPointChecked.getPrice());
             repository().save(point);
- 
+
             pointPaymentRequested = new PointPaymentRequested(remainingPointChecked.getReaderId(), remainingPointChecked.getBookId(), true);
         } else {
             pointPaymentRequested = new PointPaymentRequested(remainingPointChecked.getReaderId(), remainingPointChecked.getBookId(), false);
         }
- 
+
         pointPaymentRequested.publish();
         return pointPaymentRequested;
     }
@@ -123,6 +124,7 @@ public class Point {
             .orElseThrow(() -> new RuntimeException("포인트 계정 없음"));
  
         // 담고 결제 이벤트
+
         RemainingPointChecked remainingPointChecked = new RemainingPointChecked();
         remainingPointChecked.setReaderId(payRequested.getReaderId());
         remainingPointChecked.setPrice(9900); 
