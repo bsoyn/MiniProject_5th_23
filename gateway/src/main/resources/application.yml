@@ -153,3 +153,12 @@ jwt:
   access-token-validity-in-seconds: 3600
 server:
   port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
