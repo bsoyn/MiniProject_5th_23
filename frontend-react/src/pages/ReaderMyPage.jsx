@@ -50,7 +50,6 @@ const ReaderMyPage = () => {
           method: 'GET',
           headers: headers,
         });
-
         //api url 수정
         const pointResponse = await fetch(`${BASE_URL}/points/reader/${currentUserId}`, {
           method: 'GET',
@@ -179,6 +178,11 @@ const ReaderMyPage = () => {
         // }));
       setShowSubscriptionModal(false);
       alert('월 구독권이 구매되었습니다!');
+      const subscriptionResponse = await fetch(`${BASE_URL}/subscribes/reader/${currentUserId}`,{
+          method: 'GET',
+          headers: headers,
+      });
+      setSubscriptionInfo(subscriptionResponse.json);
       } else {
         const errorText = await response.text();
         console.error('구매 실패:', errorText);
@@ -189,7 +193,7 @@ const ReaderMyPage = () => {
     }
   };
 
-  const isSubscriptionActive = subscriptionInfo && new Date(subscriptionInfo.endDate) > new Date();
+  const isSubscriptionActive = subscriptionInfo && new Date(subscriptionInfo.subscribeEndDate) > new Date();
 
   return (
     <div style={{
@@ -349,7 +353,7 @@ const ReaderMyPage = () => {
                     fontSize: '0.9rem',
                     color: isSubscriptionActive ? '#28a745' : '#dc3545'
                   }}>
-                    {isSubscriptionActive ? `${userInfo?.subscriptionEndDate}까지` : '미구독'}
+                    {isSubscriptionActive ? `${subscriptionInfo?.subscribeEndDate}까지` : '미구독'}
                   </span>
                 </div>
                 <button
