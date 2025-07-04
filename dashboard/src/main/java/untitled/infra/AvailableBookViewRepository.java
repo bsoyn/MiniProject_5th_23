@@ -16,15 +16,15 @@ import untitled.domain.*;
 )
 public interface AvailableBookViewRepository
     extends PagingAndSortingRepository<AvailableBookView, Long> {
-    List<AvailableBookView> findByBookId(Long bookid);
+    List<AvailableBookView> findByBookId(Long bookId);
 
-    void deleteByReaderid(Long readerid);
+    void deleteByReaderId(Long readerId);
 
-    Optional<AvailableBookView> findByReaderidAndBookid(Long readerid, Long bookid);
+    Optional<AvailableBookView> findByReaderIdAndBookId(Long readerId, Long bookId);
 
     List<AvailableBookView> findByReaderId(Long readerId);
 
     @Transactional
     @Modifying
-    long deleteByReaderidAndIsPurchasedFalse(Long readerid);
+    long deleteByReaderIdAndIsPurchasedFalse(Long readerId);
 }
