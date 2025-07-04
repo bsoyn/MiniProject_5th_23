@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { bookService } from '../bookService.jsx';
 
+const BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 const BookListPage = () => {
   const navigate = useNavigate();
   
@@ -12,11 +14,85 @@ const BookListPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('전체');
   const [sortBy, setSortBy] = useState('latest'); // latest, popular, price-low, price-high
   
-  // 임시 사용자 상태 (실제로는 context에서 가져올 것)
-  const [user, setUser] = useState(null); // null, { type: 'reader', name: '홍길동' }
+  // 사용자 상태 - 세션 스토리지에서 읽어오기
+  const [user, setUser] = useState(null);
+
+  // 로그아웃 처리
+  const handleLogout = () => {
+    // 세션 스토리지 클리어
+    sessionStorage.removeItem('userInfo');
+    sessionStorage.removeItem('accessToken');
+    setUser(null);
+    navigate('/');
+  };
 
   // 카테고리 목록
   const categories = ['전체', '소설', 'SF', '로맨스', '에세이', '역사', '자기계발'];
+
+  // 토큰으로 사용자 정보 가져오기
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      const userInfo = sessionStorage.getItem('userInfo');
+      const accessToken = sessionStorage.getItem('accessToken');
+      
+      console.log('세션 스토리지 userInfo:', userInfo); // 디버깅용
+      
+      if (!accessToken) {
+        console.log('토큰이 없어서 로그인 없이 진행');
+        return;
+      }
+
+      try {
+        // 토큰으로 사용자 정보 가져오기
+        const response = await fetch(`${BASE_URL}/api/token`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('사용자 정보를 가져올 수 없습니다');
+        }
+
+        const userData = await response.json();
+        console.log('API에서 받은 사용자 정보:', userData); // 디버깅용
+
+        // 세션 스토리지의 userType과 API 응답 조합
+        let userType = 'reader'; // 기본값
+        let email = '';
+        if (userInfo) {
+          try {
+            const parsedUser = JSON.parse(userInfo);
+            userType = parsedUser.userType?.toLowerCase() || 'reader';
+            email = parsedUser.email || '';
+          } catch (error) {
+            console.warn('세션 스토리지 파싱 실패, 기본값 사용');
+          }
+        }
+
+        const finalUserData = {
+          id: userData.userId,
+          type: userType,
+          name: userData.userName,
+          email: email
+        };
+        
+        console.log('최종 user 상태:', finalUserData); // 디버깅용
+        setUser(finalUserData);
+
+      } catch (error) {
+        console.error('사용자 정보 로딩 실패:', error);
+        // 토큰이 유효하지 않으면 세션 스토리지 클리어
+        sessionStorage.removeItem('userInfo');
+        sessionStorage.removeItem('accessToken');
+        setUser(null);
+      }
+    };
+
+    loadUserInfo();
+  }, []);
 
   // 도서 목록 불러오기
   useEffect(() => {
@@ -62,8 +138,10 @@ const BookListPage = () => {
       }
     });
 
-  // 도서 구매
+  // 도서 구매 - /bookPurchase로 네비게이트
   const handlePurchase = async (book) => {
+    console.log('현재 user 상태:', user); // 디버깅용
+    
     if (!user) {
       alert('로그인이 필요합니다.');
       navigate('/login');
@@ -75,16 +153,8 @@ const BookListPage = () => {
       return;
     }
 
-    // 실제로는 구매 API 호출
-    const confirmed = window.confirm(`"${book.title}"을(를) ${book.price.toLocaleString()}P에 구매하시겠습니까?`);
-    if (confirmed) {
-      try {
-        // 구매 API 호출
-        alert('구매가 완료되었습니다!');
-      } catch (error) {
-        alert('구매 중 오류가 발생했습니다.');
-      }
-    }
+    // bookId만 path parameter로 전달 (userId는 BookPurchasePage에서 세션 스토리지로 가져옴)
+    navigate(`/bookPurchase/${book.id}`);
   };
 
   return (
@@ -120,46 +190,58 @@ const BookListPage = () => {
             BookHub
           </h1>
           
-          <nav style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <nav style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {/* 홈으로 가기 버튼 */}
+            <button
+              onClick={() => navigate('/')}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: 'transparent',
+                border: '1px solid #007bff',
+                borderRadius: '4px',
+                color: '#007bff',
+                cursor: 'pointer',
+                fontSize: '0.9rem'
+              }}
+            >
+              홈으로
+            </button>
+
+            {/* 로그인 상태에 따른 조건부 렌더링 */}
             {user ? (
-              <>
-                <span style={{ color: '#666', fontSize: '0.9rem' }}>
-                  안녕하세요, {user.name}님
-                </span>
-                {user.type === 'reader' && (
-                  <button
-                    onClick={() => navigate('/reader-mypage')}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      backgroundColor: '#007bff',
-                      border: 'none',
-                      borderRadius: '4px',
-                      color: '#fff',
-                      cursor: 'pointer',
-                      fontSize: '0.9rem'
-                    }}
-                  >
-                    마이페이지
-                  </button>
-                )}
-                {user.type === 'author' && (
-                  <button
-                    onClick={() => navigate('/author-mypage')}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      backgroundColor: '#28a745',
-                      border: 'none',
-                      borderRadius: '4px',
-                      color: '#fff',
-                      cursor: 'pointer',
-                      fontSize: '0.9rem'
-                    }}
-                  >
-                    작가 페이지
-                  </button>
-                )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div 
+                  onClick={() => {
+                    if (user.type === 'reader') {
+                      navigate('/readerMypage');
+                    } else if (user.type === 'author') {
+                      navigate('/authorMypage');
+                    } else if (user.type === 'admin') {
+                      navigate('/admin');
+                    }
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 1rem',
+                    backgroundColor: user.type === 'reader' ? '#007bff' : user.type === 'author' ? '#28a745' : '#dc3545',
+                    color: '#fff',
+                    borderRadius: '20px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  <span style={{ fontSize: '1.2rem' }}>
+                    {user.type === 'reader' ? '👤' : user.type === 'author' ? '✍️' : '⚙️'}
+                  </span>
+                  <span>{user.name || user.email}</span>
+                  <span style={{ fontSize: '0.8rem' }}>
+                    ({user.type === 'reader' ? '독자' : user.type === 'author' ? '작가' : '관리자'})
+                  </span>
+                </div>
                 <button
-                  onClick={() => setUser(null)}
+                  onClick={handleLogout}
                   style={{
                     padding: '0.5rem 1rem',
                     backgroundColor: 'transparent',
@@ -172,7 +254,7 @@ const BookListPage = () => {
                 >
                   로그아웃
                 </button>
-              </>
+              </div>
             ) : (
               <>
                 <button
@@ -189,6 +271,7 @@ const BookListPage = () => {
                 >
                   로그인
                 </button>
+
                 <button
                   onClick={() => navigate('/register')}
                   style={{
@@ -205,38 +288,6 @@ const BookListPage = () => {
                 </button>
               </>
             )}
-            
-            {/* 테스트용 로그인 */}
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                onClick={() => setUser({ type: 'reader', name: '홍길동' })}
-                style={{
-                  padding: '0.3rem 0.6rem',
-                  backgroundColor: '#007bff',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '3px',
-                  cursor: 'pointer',
-                  fontSize: '0.7rem'
-                }}
-              >
-                독자
-              </button>
-              <button
-                onClick={() => setUser({ type: 'author', name: '김작가' })}
-                style={{
-                  padding: '0.3rem 0.6rem',
-                  backgroundColor: '#28a745',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '3px',
-                  cursor: 'pointer',
-                  fontSize: '0.7rem'
-                }}
-              >
-                작가
-              </button>
-            </div>
           </nav>
         </div>
       </header>
