@@ -52,7 +52,7 @@ spring:
         - id: dashboard
           uri: http://localhost:8092
           predicates:
-            - Path=, /availiableBookLists/**
+            - Path=/availiableBookLists/**
         - id: frontend
           uri: http://localhost:3000
           predicates:
