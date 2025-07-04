@@ -59,20 +59,28 @@ const ReaderMyPage = () => {
           method: 'GET',
           headers: headers,
         });
-        const booksResponse = await fetch(`${BASE_URL}/availiableBookLists/reader/${currentUserId}`,{
+        const booksResponse = await fetch(`${BASE_URL}/purchasedBooks/history/${currentUserId}`,{
           method: 'GET',
           headers: headers,
         });
-
-        // console.log(pointResponse);
-        console.log(subscriptionResponse);
         console.log(booksResponse);
 
         const userData = await userResponse.json();
-        // const pointData = {totalPoint:1}; //pointData를 받아오지 못하는 상태라서 임의로 값을 부여해둠(오류가 생김)
         const pointData = await pointResponse.json();
         const subscriptionData = await subscriptionResponse.json();
-        // const booksData = await booksResponse.json();
+        const booksData = await booksResponse.json();
+        console.log(booksData);
+        const bookInfoPromises = booksData?.map(async (book) => {
+          const bookinfo = await fetch(`${BASE_URL}/books/${book.bookId}`,{
+            method: 'GET',
+            headers: headers,
+          });
+          // console.log(await bookinfo.json());
+          const addinfo = await bookinfo.json();
+          console.log(addinfo);
+          setPurchasedBooks(purchasedBooks => [...purchasedBooks, addinfo]);
+        });
+        console.log(purchasedBooks);
 
         setUserInfo(userData);
         setUserInfo(prev => ({
@@ -171,18 +179,12 @@ const ReaderMyPage = () => {
       });
       console.log(response);
       if (response.ok) {
-        // const result = await response.json();
-        // setUserInfo(prev => ({
-        //   ...prev,
-        //   points: result.totalPoint // DB 기준 최신 포인트 반영
-        // }));
-      setShowSubscriptionModal(false);
-      alert('월 구독권이 구매되었습니다!');
-      const subscriptionResponse = await fetch(`${BASE_URL}/subscribes/reader/${currentUserId}`,{
-          method: 'GET',
-          headers: headers,
-      });
-      setSubscriptionInfo(subscriptionResponse.json);
+        setShowSubscriptionModal(false);
+        alert('월 구독권이 구매되었습니다!');
+        const subscriptionResponse = await fetch(`${BASE_URL}/subscribes/reader/${userId}`,{
+            method: 'GET',
+        });
+        setSubscriptionInfo(subscriptionResponse.json);
       } else {
         const errorText = await response.text();
         console.error('구매 실패:', errorText);
@@ -417,9 +419,6 @@ const ReaderMyPage = () => {
                         <p style={{ color: '#666', marginBottom: '0.3rem' }}>
                           저자: {book.author}
                         </p>
-                        <p style={{ color: '#999', fontSize: '0.8rem' }}>
-                          구매일: {new Date(book.purchaseDate).toLocaleDateString()}
-                        </p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{
@@ -453,7 +452,7 @@ const ReaderMyPage = () => {
                   <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📚</div>
                   <p>아직 구매한 도서가 없습니다.</p>
                   <button
-                    onClick={() => navigate('/books')}
+                    onClick={() => navigate('/bookListPage')}
                     style={{
                       marginTop: '1rem',
                       padding: '0.8rem 1.5rem',
