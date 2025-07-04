@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const BASE_URL = process.env.REACT_APP_API_BASE_URL; 
+
 const LoginPage = () => {
   const [formData, setFormData] = useState({
     email: '',
@@ -89,7 +91,17 @@ const LoginPage = () => {
           formData.password === ADMIN_PASSWORD
         ) {
           alert('관리자 로그인 성공!');
+          
+          // 관리자 정보 저장
           sessionStorage.setItem('accessToken', 'admin-token');
+          const adminInfo = {
+            userType: 'ADMIN',
+            name: '관리자',
+            email: ADMIN_EMAIL,
+            id: 0
+          };
+          sessionStorage.setItem('userInfo', JSON.stringify(adminInfo));
+          
           navigate('/admin'); // 관리자 페이지로 이동
           return;
         } else {
@@ -98,13 +110,15 @@ const LoginPage = () => {
           return;
         }
       }
+
       // API 호출용 데이터 준비
       const loginData = {
         email: formData.email,
         password: formData.password,
         userType: userType // READER, AUTHOR, ADMIN
       };
-      const response = await fetch('/api/auth/login', {
+
+      const response = await fetch(`${BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -115,20 +129,26 @@ const LoginPage = () => {
           userType: userType,
         }),
       });
+      
       const data = await response.json();
-
       console.log('로그인 시도:', loginData);
 
-      if(response.ok){
-          console.log('로그인 성공:', data);
-          alert(`${userTypeInfo[userType].label} 로그인 성공!`);
-          // localStorage.setItem('token', data.token);
-          sessionStorage.setItem('accessToken', data.accessToken);
-        }
-        else{
-          console.error('로그인 실패:',data);
-          setErrors({ general: data.message || '로그인에 실패했습니다. 다시 시도해주세요.' });
-        }
+      if (response.ok) {
+        console.log('로그인 성공:', data);
+        alert(`${userTypeInfo[userType].label} 로그인 성공!`);
+        
+        // 토큰 저장
+        sessionStorage.setItem('accessToken', data.accessToken);
+        
+        // 사용자 정보 저장
+        const userInfo = {
+          userType: userType,
+          name: data.name || data.username || formData.email.split('@')[0], // 서버에서 받은 이름 또는 이메일에서 추출
+          email: data.email || formData.email,
+          id: data.id || data.userId
+        };
+        sessionStorage.setItem('userInfo', JSON.stringify(userInfo));
+        
         // 사용자 타입별 리다이렉트
         switch(userType) {
           case 'READER':
@@ -138,17 +158,20 @@ const LoginPage = () => {
             navigate('/authorMypage');
             break;
           case 'ADMIN':
-            //관리자 페이지로 이동
-            // navigate('/admin-dashboard');
+            navigate('/admin');
             break;
           default:
             navigate('/');
         }
+      } else {
+        console.error('로그인 실패:', data);
+        setErrors({ general: data.message || '로그인에 실패했습니다. 다시 시도해주세요.' });
+      }
         
     } catch (error) {
       console.error('로그인 오류:', error);
       setErrors({ general: '서버와 통신 중 오류가 발생했습니다.' });
-    }finally{
+    } finally {
       setIsLoading(false);
     }
   };
