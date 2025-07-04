@@ -22,7 +22,7 @@ public class AvailableBookController {
     }
 
 
-    @GetMapping("/reader{currentUserId}")
+    @GetMapping("/reader/{currentUserId}")
     public AvailableBookList getAvailableBookListByReaderId(@PathVariable Long currentUserId) {
         
         return availableBookService.getAvailableBookList(currentUserId);
