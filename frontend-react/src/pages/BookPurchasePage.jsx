@@ -895,7 +895,7 @@ const BookPurchasePage = () => {
               margin: '0 auto'
             }}>
               <button
-                onClick={() => navigate(`/books/${bookId}`)}
+                onClick={() => navigate(`/book-detail/${bookId}`)}
                 style={{
                   padding: '1rem 2rem',
                   backgroundColor: '#28a745',

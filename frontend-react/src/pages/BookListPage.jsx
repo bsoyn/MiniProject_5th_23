@@ -432,7 +432,7 @@ const BookListPage = () => {
               }}
               onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
               onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-              onClick={() => navigate(`/books/${book.id}`)}
+              onClick={() => navigate(`/book-detail/${book.id}`)}
               >
                 {/* 도서 이미지 */}
                 <div style={{

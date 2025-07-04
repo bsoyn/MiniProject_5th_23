@@ -1,12 +1,16 @@
 package untitled.infra;
 
 import java.util.Optional;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;           // 추가 필요
+import java.util.HashMap;       // 추가 필요
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import untitled.domain.*;
@@ -48,5 +52,30 @@ public class PurchasedBookController {
         
         return purchaseService.getPurchaseHistory(readerId);
     }
+
+
+    // PurchasedBookController에 추가
+    @GetMapping("/purchasedBooks/check/{readerId}/{bookId}")
+    public ResponseEntity<Map<String, Boolean>> checkPurchase(
+        @PathVariable Long readerId, 
+        @PathVariable Long bookId
+    ) {
+        try {
+            boolean isPurchased = purchaseService.isPurchased(readerId, bookId);
+            
+            Map<String, Boolean> response = new HashMap<>();
+            response.put("isPurchased", isPurchased);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("구매 확인 중 오류: " + e.getMessage());
+            e.printStackTrace();
+            
+            Map<String, Boolean> response = new HashMap<>();
+            response.put("isPurchased", false);
+            
+            return ResponseEntity.ok(response); // 에러 시 false 반환
+        }
+}
 }
 //>>> Clean Arch / Inbound Adaptor
