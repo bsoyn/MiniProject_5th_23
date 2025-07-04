@@ -39,13 +39,13 @@ public class Point {
  
     private Integer price;
  
-    @PreUpdate
-    public void onPreUpdate() {
-        PointPaymentRequested pointPaymentRequested = new PointPaymentRequested(
-            this
-        );
-        pointPaymentRequested.publishAfterCommit();
-    }
+    // @PreUpdate
+    // public void onPreUpdate() {
+    //     PointPaymentRequested pointPaymentRequested = new PointPaymentRequested(
+    //         this
+    //     );
+    //     pointPaymentRequested.publishAfterCommit();
+    // }
  
     public static PointRepository repository() {
         PointRepository pointRepository = PointApplication.applicationContext.getBean(

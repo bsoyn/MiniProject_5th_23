@@ -23,38 +23,6 @@ public class PolicyHandler {
     @StreamListener(KafkaProcessor.INPUT)
     public void whatever(@Payload String eventString) {}
 
-    // @StreamListener(
-    //     value = KafkaProcessor.INPUT,
-    //     condition = "headers['type']=='BuyApproved'"
-    // )
-    // public void wheneverBuyApproved_SubscribeFinish(
-    //     @Payload BuyApproved buyApproved
-    // ) {
-    //     BuyApproved event = buyApproved;
-    //     System.out.println(
-    //         "\n\n##### listener SubscribeFinish : " + buyApproved + "\n\n"
-    //     );
-
-    //     // Sample Logic //
-    //     Subscribe.subscribeFinish(event);
-    // }
-
-    // @StreamListener(
-    //     value = KafkaProcessor.INPUT,
-    //     condition = "headers['type']=='BuyRejected'"
-    // )
-    // public void wheneverBuyRejected_SubscribeFailAlert(
-    //     @Payload BuyRejected buyRejected
-    // ) {
-    //     BuyRejected event = buyRejected;
-    //     System.out.println(
-    //         "\n\n##### listener SubscribeFailAlert : " + buyRejected + "\n\n"
-    //     );
-
-    //     // Sample Logic //
-    //     Subscribe.subscribeFailAlert(event);
-    // }
-
     // 추가된 승환님 부분 PointPaymentRequested
     @StreamListener(
         value = KafkaProcessor.INPUT,
