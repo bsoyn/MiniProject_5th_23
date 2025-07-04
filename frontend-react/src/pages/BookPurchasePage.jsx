@@ -1,69 +1,159 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+
+const BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const BookPurchasePage = () => {
   const navigate = useNavigate();
-  const { bookId } = useParams();
+  const { bookId: paramBookId } = useParams();
+  const [searchParams] = useSearchParams();
+  const queryBookId = searchParams.get('bookId');
+  
+  // bookId는 path parameter 또는 query parameter에서 가져오기
+  const bookId = paramBookId || queryBookId;
   
   // 상태 관리
   const [book, setBook] = useState(null);
-  const [user, setUser] = useState({ 
-    type: 'reader', 
-    name: '홍길동', 
-    points: 1000000, // 현재 보유 포인트
-    id: 1 
-  });
+  const [user, setUser] = useState(null);
+  const [userPoints, setUserPoints] = useState(0);
   const [loading, setLoading] = useState(true);
   const [purchaseStep, setPurchaseStep] = useState('confirm'); // confirm, payment, complete
   const [paymentMethod, setPaymentMethod] = useState('points'); // points, charge
-  const [chargeAmount, setChargeAmount] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // 임시 도서 데이터
-  const sampleBook = {
-    id: parseInt(bookId),
-    title: '별을 삼킨 소년',
-    author: '김작가',
-    category: 'SF',
-    price: 5000,
-    imageUrl: 'https://via.placeholder.com/300x420/333333/ffffff?text=별을+삼킨+소년',
-    description: '소년은 어느 조용한 밤, 마당에 떨어진 작은 별 하나를 발견했다.',
-    rating: 4.7,
-    reviewCount: 89,
-    pages: 180
-  };
-
-  // 충전 금액 옵션
-  const chargeOptions = [
-    { amount: 5000, bonus: 0, label: '5,000P' },
-    { amount: 10000, bonus: 500, label: '10,000P (+500P 보너스)' },
-    { amount: 20000, bonus: 1500, label: '20,000P (+1,500P 보너스)' },
-    { amount: 50000, bonus: 5000, label: '50,000P (+5,000P 보너스)' }
-  ];
-
+  // 세션 스토리지에서 사용자 정보 읽어오기 및 토큰으로 사용자 정보 가져오기
   useEffect(() => {
-    const loadBook = async () => {
+    const loadUserInfo = async () => {
+      const userInfo = sessionStorage.getItem('userInfo');
+      const accessToken = sessionStorage.getItem('accessToken');
+      
+      console.log('세션 스토리지 확인:', { userInfo, accessToken }); // 디버깅용
+      
+      if (!accessToken) {
+        console.log('토큰이 없습니다. 로그인 페이지로 이동합니다.');
+        navigate('/login');
+        return;
+      }
+
+      try {
+        // 토큰으로 사용자 정보 가져오기
+        const response = await fetch(`${BASE_URL}/api/token`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('사용자 정보를 가져올 수 없습니다');
+        }
+
+        const userData = await response.json();
+        console.log('API에서 받은 사용자 정보:', userData); // 디버깅용
+
+        // 세션 스토리지의 userType과 API 응답 조합
+        let userType = 'reader'; // 기본값
+        if (userInfo) {
+          try {
+            const parsedUser = JSON.parse(userInfo);
+            userType = parsedUser.userType?.toLowerCase() || 'reader';
+          } catch (error) {
+            console.warn('세션 스토리지 파싱 실패, 기본값 사용');
+          }
+        }
+
+        setUser({
+          id: userData.userId,
+          name: userData.userName,
+          type: userType,
+          email: '' // API에서 이메일을 제공하지 않는 경우
+        });
+
+        // 독자가 아닌 경우 접근 차단
+        if (userType !== 'reader') {
+          alert('독자만 도서를 구매할 수 있습니다.');
+          navigate('/bookListPage');
+          return;
+        }
+
+      } catch (error) {
+        console.error('사용자 정보 로딩 실패:', error);
+        alert('사용자 정보를 불러오는 중 오류가 발생했습니다. 다시 로그인해주세요.');
+        sessionStorage.removeItem('userInfo');
+        sessionStorage.removeItem('accessToken');
+        navigate('/login');
+      }
+    };
+
+    loadUserInfo();
+  }, [navigate]);
+
+  // 도서 정보와 포인트 정보 불러오기
+  useEffect(() => {
+    if (!bookId || !user) {
+      return; // user가 아직 로드되지 않았으면 기다림
+    }
+
+    console.log('데이터 로딩 시작 - bookId:', bookId, 'user.id:', user.id); // 디버깅용
+
+    const loadData = async () => {
       setLoading(true);
       try {
-        // 실제로는 API 호출
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setBook(sampleBook);
+        // 도서 정보 조회
+        const bookResponse = await fetch(`${BASE_URL}/books/${bookId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${sessionStorage.getItem('accessToken')}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!bookResponse.ok) {
+          throw new Error('도서 정보를 불러올 수 없습니다');
+        }
+
+        const bookData = await bookResponse.json();
+        console.log('도서 정보 로드 성공:', bookData); // 디버깅용
+        setBook(bookData);
+
+        // 포인트 정보 조회 - user.id 사용
+        const pointsResponse = await fetch(`${BASE_URL}/points/reader/${user.id}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${sessionStorage.getItem('accessToken')}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!pointsResponse.ok) {
+          throw new Error('포인트 정보를 불러올 수 없습니다');
+        }
+
+        const pointsData = await pointsResponse.json();
+        console.log('포인트 정보 로드 성공:', pointsData); // 디버깅용
+        setUserPoints(pointsData.totalPoint);
+
       } catch (error) {
-        console.error('도서 정보 불러오기 실패:', error);
+        console.error('데이터 로딩 실패:', error);
+        alert('정보를 불러오는 중 오류가 발생했습니다.');
+        navigate('/bookListPage');
       } finally {
         setLoading(false);
       }
     };
 
-    loadBook();
-  }, [bookId]);
+    loadData();
+  }, [bookId, user, navigate]); // user를 dependency에 추가
+
+  // 포인트가 충분한지 확인
+  const hasEnoughPoints = userPoints >= (book?.price || 0);
 
   // 포인트로 구매
   const handlePointsPurchase = async () => {
-    if (user.points < book.price) {
-      alert('포인트가 부족합니다. 포인트를 충전해주세요.');
-      setPaymentMethod('charge');
+    if (!hasEnoughPoints) {
+      alert('포인트가 부족합니다.');
       return;
     }
 
@@ -75,59 +165,94 @@ const BookPurchasePage = () => {
     setIsProcessing(true);
     
     try {
-      // 실제로는 구매 API 호출
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const accessToken = sessionStorage.getItem('accessToken');
+      console.log('구매 API 호출 시작');
+      console.log('- BASE_URL:', BASE_URL);
+      console.log('- accessToken 존재 여부:', !!accessToken);
+      console.log('- accessToken 일부:', accessToken ? accessToken.substring(0, 20) + '...' : 'null');
+      console.log('- readerId:', user.id);
+      console.log('- bookId:', bookId, '(type:', typeof bookId, ')');
+      console.log('- price:', book.price);
+
+      const requestBody = {
+        readerId: user.id,
+        bookId: parseInt(bookId),
+        price: book.price
+      };
+      console.log('- 요청 body:', requestBody);
+
+      // 실제 구매 API 호출
+      const purchaseResponse = await fetch(`${BASE_URL}/purchasedBooks/purchasebook`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log('API 응답 상태:', purchaseResponse.status, purchaseResponse.statusText);
+      console.log('응답 헤더 Content-Type:', purchaseResponse.headers.get('Content-Type'));
+
+      // 응답이 JSON인지 확인
+      const contentType = purchaseResponse.headers.get('Content-Type');
+      const isJsonResponse = contentType && contentType.includes('application/json');
+
+      if (!purchaseResponse.ok) {
+        if (isJsonResponse) {
+          const errorData = await purchaseResponse.json();
+          console.error('API 에러 응답:', errorData);
+          throw new Error(errorData.message || `HTTP ${purchaseResponse.status}: ${purchaseResponse.statusText}`);
+        } else {
+          // JSON이 아닌 응답 (HTML 등)
+          const errorText = await purchaseResponse.text();
+          console.error('비JSON 에러 응답:', errorText.substring(0, 200) + '...');
+          
+          if (purchaseResponse.status === 401) {
+            throw new Error('인증이 만료되었습니다. 다시 로그인해주세요.');
+          } else if (purchaseResponse.status === 404) {
+            throw new Error('API 엔드포인트를 찾을 수 없습니다. 서버 설정을 확인해주세요.');
+          } else {
+            throw new Error(`서버 오류 (${purchaseResponse.status}): ${purchaseResponse.statusText}`);
+          }
+        }
+      }
+
+      // 성공 응답 처리
+      if (isJsonResponse) {
+        const purchaseResult = await purchaseResponse.json();
+        console.log('구매 API 성공 응답:', purchaseResult);
+      } else {
+        console.log('구매 성공 (비JSON 응답)');
+      }
       
-      // 포인트 차감
-      setUser(prev => ({
-        ...prev,
-        points: prev.points - book.price
-      }));
+      // 구매 성공 시 포인트 차감 (UI 업데이트용)
+      setUserPoints(prev => prev - book.price);
       
+      // 구매 완료 단계로 이동
       setPurchaseStep('complete');
+      
     } catch (error) {
-      alert('구매 중 오류가 발생했습니다.');
+      console.error('구매 실패:', error);
+      if (error.message.includes('인증이 만료')) {
+        // 토큰이 만료된 경우 로그인 페이지로 이동
+        sessionStorage.removeItem('userInfo');
+        sessionStorage.removeItem('accessToken');
+        alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+        navigate('/login');
+      } else {
+        alert(`구매 중 오류가 발생했습니다: ${error.message}`);
+      }
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // 포인트 충전 후 구매
-  const handleChargeAndPurchase = async () => {
-    const amount = parseInt(chargeAmount);
-    if (!amount || amount < (book.price - user.points)) {
-      alert(`최소 ${(book.price - user.points).toLocaleString()}P 이상 충전해주세요.`);
-      return;
-    }
-
-    if (!agreeTerms) {
-      alert('구매 약관에 동의해주세요.');
-      return;
-    }
-
-    setIsProcessing(true);
-    
-    try {
-      // 1. 포인트 충전 API 호출
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // 보너스 포인트 계산
-      const selectedOption = chargeOptions.find(option => option.amount === amount);
-      const bonusPoints = selectedOption ? selectedOption.bonus : 0;
-      const totalCharged = amount + bonusPoints;
-      
-      // 2. 포인트 추가 및 도서 구매
-      setUser(prev => ({
-        ...prev,
-        points: prev.points + totalCharged - book.price
-      }));
-      
-      setPurchaseStep('complete');
-    } catch (error) {
-      alert('결제 중 오류가 발생했습니다.');
-    } finally {
-      setIsProcessing(false);
-    }
+  // 로그아웃 처리
+  const handleLogout = () => {
+    sessionStorage.removeItem('userInfo');
+    sessionStorage.removeItem('accessToken');
+    navigate('/');
   };
 
   if (loading) {
@@ -160,7 +285,7 @@ const BookPurchasePage = () => {
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>❌</div>
           <p>도서를 찾을 수 없습니다.</p>
           <button
-            onClick={() => navigate('/books')}
+            onClick={() => navigate('/bookListPage')}
             style={{
               marginTop: '1rem',
               padding: '0.8rem 1.5rem',
@@ -211,24 +336,41 @@ const BookPurchasePage = () => {
             BookHub
           </h1>
           
-          <nav style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <span style={{ color: '#666', fontSize: '0.9rem' }}>
-              {user.name}님 (보유: {user.points.toLocaleString()}P)
-            </span>
-            <button
-              onClick={() => navigate('/books')}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: 'transparent',
-                border: '1px solid #666',
-                borderRadius: '4px',
-                color: '#666',
-                cursor: 'pointer',
-                fontSize: '0.9rem'
-              }}
-            >
-              도서 목록
-            </button>
+          <nav style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {user && (
+              <>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#007bff',
+                  color: '#fff',
+                  borderRadius: '20px',
+                  fontSize: '0.9rem'
+                }}>
+                  <span style={{ fontSize: '1.2rem' }}>👤</span>
+                  <span>{user.name}</span>
+                  <span style={{ fontSize: '0.8rem' }}>
+                    (보유: {userPoints.toLocaleString()}P)
+                  </span>
+                </div>
+                <button
+                  onClick={() => navigate('/bookListPage')}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: 'transparent',
+                    border: '1px solid #666',
+                    borderRadius: '4px',
+                    color: '#666',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  도서 목록
+                </button>
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -352,13 +494,13 @@ const BookPurchasePage = () => {
                   {book.title}
                 </h3>
                 <p style={{ color: '#666', marginBottom: '0.5rem' }}>
-                  저자: {book.author}
+                  저자: {book.authorName}
                 </p>
                 <p style={{ color: '#666', marginBottom: '0.5rem' }}>
                   카테고리: {book.category}
                 </p>
-                <p style={{ color: '#666', marginBottom: '1rem' }}>
-                  페이지: {book.pages}쪽
+                <p style={{ color: '#666', marginBottom: '1rem', lineHeight: '1.4' }}>
+                  {book.summary}
                 </p>
                 <div style={{
                   fontSize: '1.5rem',
@@ -373,8 +515,8 @@ const BookPurchasePage = () => {
             {/* 현재 포인트 정보 */}
             <div style={{
               padding: '1.5rem',
-              backgroundColor: user.points >= book.price ? '#e8f5e8' : '#fff3cd',
-              border: user.points >= book.price ? '1px solid #d4edda' : '1px solid #ffeaa7',
+              backgroundColor: hasEnoughPoints ? '#e8f5e8' : '#fff3cd',
+              border: hasEnoughPoints ? '1px solid #d4edda' : '1px solid #ffeaa7',
               borderRadius: '8px',
               marginBottom: '2rem'
             }}>
@@ -385,7 +527,7 @@ const BookPurchasePage = () => {
                 marginBottom: '0.5rem'
               }}>
                 <span>현재 보유 포인트</span>
-                <span style={{ fontWeight: 'bold' }}>{user.points.toLocaleString()}P</span>
+                <span style={{ fontWeight: 'bold' }}>{userPoints.toLocaleString()}P</span>
               </div>
               <div style={{
                 display: 'flex',
@@ -404,11 +546,11 @@ const BookPurchasePage = () => {
               }}>
                 <span>구매 후 잔액</span>
                 <span style={{ 
-                  color: user.points >= book.price ? '#28a745' : '#dc3545' 
+                  color: hasEnoughPoints ? '#28a745' : '#dc3545' 
                 }}>
-                  {user.points >= book.price 
-                    ? `${(user.points - book.price).toLocaleString()}P` 
-                    : `${(user.points - book.price).toLocaleString()}P (부족)`
+                  {hasEnoughPoints 
+                    ? `${(userPoints - book.price).toLocaleString()}P` 
+                    : `${(userPoints - book.price).toLocaleString()}P (부족)`
                   }
                 </span>
               </div>
@@ -422,11 +564,11 @@ const BookPurchasePage = () => {
                   display: 'flex',
                   alignItems: 'center',
                   padding: '1rem',
-                  border: paymentMethod === 'points' ? '2px solid #007bff' : '1px solid #ddd',
+                  border: paymentMethod === 'points' && hasEnoughPoints ? '2px solid #007bff' : '1px solid #ddd',
                   borderRadius: '8px',
-                  cursor: user.points >= book.price ? 'pointer' : 'not-allowed',
-                  backgroundColor: paymentMethod === 'points' ? '#f0f8ff' : '#fff',
-                  opacity: user.points >= book.price ? 1 : 0.6
+                  cursor: hasEnoughPoints ? 'pointer' : 'not-allowed',
+                  backgroundColor: paymentMethod === 'points' && hasEnoughPoints ? '#f0f8ff' : '#fff',
+                  opacity: hasEnoughPoints ? 1 : 0.6
                 }}>
                   <input
                     type="radio"
@@ -434,7 +576,7 @@ const BookPurchasePage = () => {
                     value="points"
                     checked={paymentMethod === 'points'}
                     onChange={(e) => setPaymentMethod(e.target.value)}
-                    disabled={user.points < book.price}
+                    disabled={!hasEnoughPoints}
                     style={{ marginRight: '1rem' }}
                   />
                   <div>
@@ -442,7 +584,8 @@ const BookPurchasePage = () => {
                       보유 포인트로 결제
                     </div>
                     <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                      현재 {user.points.toLocaleString()}P 보유 중
+                      현재 {userPoints.toLocaleString()}P 보유 중
+                      {!hasEnoughPoints && ` (${(book.price - userPoints).toLocaleString()}P 부족)`}
                     </div>
                   </div>
                 </label>
@@ -469,7 +612,7 @@ const BookPurchasePage = () => {
                       포인트 충전 후 결제
                     </div>
                     <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                      부족한 포인트를 충전하고 구매
+                      마이페이지에서 포인트를 충전하고 구매
                     </div>
                   </div>
                 </label>
@@ -509,7 +652,7 @@ const BookPurchasePage = () => {
             {/* 버튼 */}
             <div style={{ display: 'flex', gap: '1rem' }}>
               <button
-                onClick={() => navigate(`/books/${bookId}`)}
+                onClick={() => navigate('/bookListPage')}
                 style={{
                   flex: 1,
                   padding: '1rem',
@@ -523,23 +666,42 @@ const BookPurchasePage = () => {
               >
                 취소
               </button>
-              <button
-                onClick={() => setPurchaseStep('payment')}
-                disabled={!agreeTerms}
-                style={{
-                  flex: 2,
-                  padding: '1rem',
-                  backgroundColor: agreeTerms ? '#007bff' : '#ddd',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: agreeTerms ? 'pointer' : 'not-allowed',
-                  fontSize: '1rem',
-                  fontWeight: 'bold'
-                }}
-              >
-                다음 단계
-              </button>
+              {paymentMethod === 'charge' ? (
+                <button
+                  onClick={() => navigate('/readerMypage')}
+                  style={{
+                    flex: 2,
+                    padding: '1rem',
+                    backgroundColor: '#28a745',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  포인트 충전하러 가기
+                </button>
+              ) : (
+                <button
+                  onClick={() => setPurchaseStep('payment')}
+                  disabled={!agreeTerms || !hasEnoughPoints}
+                  style={{
+                    flex: 2,
+                    padding: '1rem',
+                    backgroundColor: (agreeTerms && hasEnoughPoints) ? '#007bff' : '#ddd',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: (agreeTerms && hasEnoughPoints) ? 'pointer' : 'not-allowed',
+                    fontSize: '1rem',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  다음 단계
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -562,265 +724,80 @@ const BookPurchasePage = () => {
               결제
             </h2>
 
-            {paymentMethod === 'points' ? (
-              // 포인트 결제
-              <div>
-                <h3 style={{ color: '#333', marginBottom: '1.5rem' }}>포인트 결제</h3>
-                
+            <div>
+              <h3 style={{ color: '#333', marginBottom: '1.5rem' }}>포인트 결제</h3>
+              
+              <div style={{
+                padding: '1.5rem',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                marginBottom: '2rem'
+              }}>
                 <div style={{
-                  padding: '1.5rem',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '8px',
-                  marginBottom: '2rem'
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: '0.5rem'
                 }}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginBottom: '0.5rem'
-                  }}>
-                    <span>도서 가격</span>
-                    <span style={{ fontWeight: 'bold' }}>{book.price.toLocaleString()}P</span>
-                  </div>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginBottom: '0.5rem'
-                  }}>
-                    <span>보유 포인트</span>
-                    <span>{user.points.toLocaleString()}P</span>
-                  </div>
-                  <hr style={{ margin: '1rem 0' }} />
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: '1.1rem',
-                    fontWeight: 'bold'
-                  }}>
-                    <span>결제 후 잔액</span>
-                    <span style={{ color: '#28a745' }}>
-                      {(user.points - book.price).toLocaleString()}P
-                    </span>
-                  </div>
+                  <span>도서 가격</span>
+                  <span style={{ fontWeight: 'bold' }}>{book.price.toLocaleString()}P</span>
                 </div>
-
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  <button
-                    onClick={() => setPurchaseStep('confirm')}
-                    style={{
-                      flex: 1,
-                      padding: '1rem',
-                      backgroundColor: '#6c757d',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '1rem'
-                    }}
-                  >
-                    이전 단계
-                  </button>
-                  <button
-                    onClick={handlePointsPurchase}
-                    disabled={isProcessing}
-                    style={{
-                      flex: 2,
-                      padding: '1rem',
-                      backgroundColor: isProcessing ? '#ddd' : '#007bff',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: isProcessing ? 'not-allowed' : 'pointer',
-                      fontSize: '1rem',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    {isProcessing ? '결제 처리 중...' : '결제하기'}
-                  </button>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: '0.5rem'
+                }}>
+                  <span>보유 포인트</span>
+                  <span>{userPoints.toLocaleString()}P</span>
+                </div>
+                <hr style={{ margin: '1rem 0' }} />
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold'
+                }}>
+                  <span>결제 후 잔액</span>
+                  <span style={{ color: '#28a745' }}>
+                    {(userPoints - book.price).toLocaleString()}P
+                  </span>
                 </div>
               </div>
-            ) : (
-              // 포인트 충전 후 결제
-              <div>
-                <h3 style={{ color: '#333', marginBottom: '1.5rem' }}>포인트 충전</h3>
-                
-                {/* 부족한 포인트 안내 */}
-                <div style={{
-                  padding: '1rem',
-                  backgroundColor: '#fff3cd',
-                  border: '1px solid #ffeaa7',
-                  borderRadius: '8px',
-                  marginBottom: '2rem'
-                }}>
-                  <div style={{ fontSize: '0.9rem', color: '#856404' }}>
-                    현재 {user.points.toLocaleString()}P 보유 중이며, 
-                    {(book.price - user.points).toLocaleString()}P가 부족합니다.
-                  </div>
-                </div>
 
-                {/* 충전 금액 선택 */}
-                <div style={{ marginBottom: '2rem' }}>
-                  <h4 style={{ color: '#333', marginBottom: '1rem' }}>충전 금액 선택</h4>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '1rem',
-                    marginBottom: '1rem'
-                  }}>
-                    {chargeOptions.map(option => (
-                      <button
-                        key={option.amount}
-                        onClick={() => setChargeAmount(option.amount.toString())}
-                        style={{
-                          padding: '1rem',
-                          border: chargeAmount === option.amount.toString() ? '2px solid #007bff' : '1px solid #ddd',
-                          borderRadius: '8px',
-                          backgroundColor: chargeAmount === option.amount.toString() ? '#f0f8ff' : '#fff',
-                          cursor: 'pointer',
-                          textAlign: 'left'
-                        }}
-                      >
-                        <div style={{ fontWeight: 'bold', marginBottom: '0.3rem' }}>
-                          {option.amount.toLocaleString()}P
-                        </div>
-                        <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                          {option.label}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* 직접 입력 */}
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '0.5rem',
-                      fontWeight: '500',
-                      color: '#333'
-                    }}>
-                      직접 입력 (최소 {(book.price - user.points).toLocaleString()}P)
-                    </label>
-                    <input
-                      type="number"
-                      value={chargeAmount}
-                      onChange={(e) => setChargeAmount(e.target.value)}
-                      placeholder="충전할 포인트를 입력하세요"
-                      min={book.price - user.points}
-                      style={{
-                        width: '100%',
-                        padding: '0.8rem',
-                        border: '1px solid #ddd',
-                        borderRadius: '4px',
-                        fontSize: '1rem',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* 결제 후 포인트 현황 */}
-                {chargeAmount && (
-                  <div style={{
-                    padding: '1.5rem',
-                    backgroundColor: '#f8f9fa',
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button
+                  onClick={() => setPurchaseStep('confirm')}
+                  style={{
+                    flex: 1,
+                    padding: '1rem',
+                    backgroundColor: '#6c757d',
+                    color: '#fff',
+                    border: 'none',
                     borderRadius: '8px',
-                    marginBottom: '2rem'
-                  }}>
-                    <h4 style={{ color: '#333', marginBottom: '1rem' }}>결제 후 포인트 현황</h4>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      marginBottom: '0.5rem'
-                    }}>
-                      <span>현재 보유</span>
-                      <span>{user.points.toLocaleString()}P</span>
-                    </div>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      marginBottom: '0.5rem'
-                    }}>
-                      <span>충전 포인트</span>
-                      <span>+{parseInt(chargeAmount || 0).toLocaleString()}P</span>
-                    </div>
-                    {(() => {
-                      const selectedOption = chargeOptions.find(option => option.amount === parseInt(chargeAmount));
-                      return selectedOption && selectedOption.bonus > 0 ? (
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          marginBottom: '0.5rem',
-                          color: '#28a745'
-                        }}>
-                          <span>보너스 포인트</span>
-                          <span>+{selectedOption.bonus.toLocaleString()}P</span>
-                        </div>
-                      ) : null;
-                    })()}
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      marginBottom: '0.5rem'
-                    }}>
-                      <span>도서 구매</span>
-                      <span>-{book.price.toLocaleString()}P</span>
-                    </div>
-                    <hr style={{ margin: '1rem 0' }} />
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: '1.1rem',
-                      fontWeight: 'bold'
-                    }}>
-                      <span>최종 잔액</span>
-                      <span style={{ color: '#28a745' }}>
-                        {(() => {
-                          const amount = parseInt(chargeAmount || 0);
-                          const selectedOption = chargeOptions.find(option => option.amount === amount);
-                          const bonus = selectedOption ? selectedOption.bonus : 0;
-                          return (user.points + amount + bonus - book.price).toLocaleString();
-                        })()}P
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  <button
-                    onClick={() => setPurchaseStep('confirm')}
-                    style={{
-                      flex: 1,
-                      padding: '1rem',
-                      backgroundColor: '#6c757d',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '1rem'
-                    }}
-                  >
-                    이전 단계
-                  </button>
-                  <button
-                    onClick={handleChargeAndPurchase}
-                    disabled={isProcessing || !chargeAmount || parseInt(chargeAmount) < (book.price - user.points)}
-                    style={{
-                      flex: 2,
-                      padding: '1rem',
-                      backgroundColor: (isProcessing || !chargeAmount || parseInt(chargeAmount) < (book.price - user.points)) ? '#ddd' : '#007bff',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: (isProcessing || !chargeAmount || parseInt(chargeAmount) < (book.price - user.points)) ? 'not-allowed' : 'pointer',
-                      fontSize: '1rem',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    {isProcessing ? '결제 처리 중...' : '충전 후 구매하기'}
-                  </button>
-                </div>
+                    cursor: 'pointer',
+                    fontSize: '1rem'
+                  }}
+                >
+                  이전 단계
+                </button>
+                <button
+                  onClick={handlePointsPurchase}
+                  disabled={isProcessing}
+                  style={{
+                    flex: 2,
+                    padding: '1rem',
+                    backgroundColor: isProcessing ? '#ddd' : '#007bff',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: isProcessing ? 'not-allowed' : 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {isProcessing ? '결제 처리 중...' : '결제하기'}
+                </button>
               </div>
-            )}
+            </div>
           </div>
         )}
 
@@ -880,7 +857,7 @@ const BookPurchasePage = () => {
                 marginBottom: '0.5rem'
               }}>
                 <span>저자</span>
-                <span>{book.author}</span>
+                <span>{book.authorName}</span>
               </div>
               <div style={{
                 display: 'flex',
@@ -906,7 +883,7 @@ const BookPurchasePage = () => {
                 fontWeight: 'bold'
               }}>
                 <span>현재 잔액</span>
-                <span style={{ color: '#007bff' }}>{user.points.toLocaleString()}P</span>
+                <span style={{ color: '#007bff' }}>{userPoints.toLocaleString()}P</span>
               </div>
             </div>
 
@@ -918,7 +895,7 @@ const BookPurchasePage = () => {
               margin: '0 auto'
             }}>
               <button
-                onClick={() => navigate(`/books/${bookId}`)}
+                onClick={() => navigate(`/book-detail/${bookId}`)}
                 style={{
                   padding: '1rem 2rem',
                   backgroundColor: '#28a745',
@@ -934,7 +911,7 @@ const BookPurchasePage = () => {
               </button>
               
               <button
-                onClick={() => navigate('/reader-mypage')}
+                onClick={() => navigate('/readerMypage')}
                 style={{
                   padding: '1rem 2rem',
                   backgroundColor: '#007bff',
@@ -949,7 +926,7 @@ const BookPurchasePage = () => {
               </button>
               
               <button
-                onClick={() => navigate('/books')}
+                onClick={() => navigate('/bookListPage')}
                 style={{
                   padding: '1rem 2rem',
                   backgroundColor: 'transparent',

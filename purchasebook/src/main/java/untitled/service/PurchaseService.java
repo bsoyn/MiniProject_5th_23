@@ -144,4 +144,10 @@ public class PurchaseService {
     public List<PurchasedBook> getPurchaseHistory(Long readerId) {
         return repository.findByReaderIdAndStatus(readerId, "COMPLETED");
     }
+
+    // PurchaseService에 추가
+    public boolean isPurchased(Long readerId, Long bookId) {
+        // 구매 이력에서 해당 독자가 해당 도서를 구매했는지 확인
+        return repository.existsByReaderIdAndBookId(readerId, bookId);
+    }
 }

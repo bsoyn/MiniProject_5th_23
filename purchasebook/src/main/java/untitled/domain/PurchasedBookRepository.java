@@ -24,4 +24,7 @@ public interface PurchasedBookRepository
 
         // 3. 독자의 전체 구매 이력 조회
         List<PurchasedBook> findByReaderIdAndStatus(Long readerId, String status);
+
+        boolean existsByReaderIdAndBookId(Long readerId, Long bookId);
+
 }
