@@ -79,3 +79,12 @@ eureka:
 
   instance:
     prefer-ip-address: true          # IP 기준 등록 (도커 환경에서는 필수)
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
