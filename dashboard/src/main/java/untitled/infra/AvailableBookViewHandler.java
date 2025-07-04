@@ -28,7 +28,7 @@ public class AvailableBookViewHandler {
             if (!bookAccessApproved.validate()) return;
 
             Optional<AvailableBookView> viewOpt = availableBookViewRepository
-                .findByReaderidAndBookid(bookAccessApproved.getReaderId(), bookAccessApproved.getBookId());
+                .findByReaderIdAndBookId(bookAccessApproved.getReaderId(), bookAccessApproved.getBookId());
 
             
             if (viewOpt.isPresent()) {
@@ -72,7 +72,7 @@ public class AvailableBookViewHandler {
             // view 객체 조회
 
             Optional<AvailableBookView> viewOpt = availableBookViewRepository
-                .findByReaderidAndBookid(purchasedCompleted.getReaderId(), purchasedCompleted.getBookId());
+                .findByReaderIdAndBookId(purchasedCompleted.getReaderId(), purchasedCompleted.getBookId());
             
             if(viewOpt.isPresent()){
                 AvailableBookView view = viewOpt.get();
@@ -94,12 +94,14 @@ public class AvailableBookViewHandler {
             if (!subscriptionFinished.validate()) return;
 
             long deleted = availableBookViewRepository
-                .deleteByReaderidAndIsPurchasedFalse(subscriptionFinished.getReaderId());
+                .deleteByReaderIdAndIsPurchasedFalse(subscriptionFinished.getReaderId());
                 System.out.println("삭제된 미구매 리드모델 건 수 : " + deleted);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+    
     //>>> DDD / CQRS
 }
