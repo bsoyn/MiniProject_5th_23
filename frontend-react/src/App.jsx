@@ -24,7 +24,7 @@ function App() {
         <Route path="/books/de" element={<BookDetailPage />}/>
         <Route path="/bookRegister" element={<BookRegisterPage />} />
         <Route path="/admin" element={<AdminPage />} />
-        <Route path="/bookPurchase" element={<BookPurchasePage />} />
+        <Route path="/bookPurchase/:bookId" element={<BookPurchasePage />} />
 
         {/*v페이지 추가해주기 */}
       </Routes>
