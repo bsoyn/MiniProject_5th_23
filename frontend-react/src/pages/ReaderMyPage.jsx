@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiCall } from '../config/api';
 
+const BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 const ReaderMyPage = () => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState("");
@@ -31,7 +33,7 @@ const ReaderMyPage = () => {
       };
 
       try {
-        const tokenResponse = await fetch("/api/token", {
+        const tokenResponse = await fetch(`${BASE_URL}/api/token`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
         });
@@ -44,34 +46,41 @@ const ReaderMyPage = () => {
         const currentUserId = tokenData.userId;
         setUserId(currentUserId);
         
-        const userResponse = await fetch(`/managerReaders/${currentUserId}`, {
+        const userResponse = await fetch(`${BASE_URL}/managerReaders/${currentUserId}`, {
           method: 'GET',
           headers: headers,
         });
-
         //api url 수정
-        const pointResponse = await fetch(`/points/reader/${currentUserId}`, {
+        const pointResponse = await fetch(`${BASE_URL}/points/reader/${currentUserId}`, {
           method: 'GET',
           headers: headers,
         });
-        // const subscriptionResponse = await fetch(`/subscribes/${currentUserId}`,{
-        //   method: 'GET',
-        //   headers: headers,
-        // });
-        // const booksResponse = await fetch(`/availiableBookLists/${currentUserId}`,{
-        //   method: 'GET',
-        //   headers: headers,
-        // });
-
-        console.log(pointResponse);
-        // console.log(subscriptionResponse);
-        // console.log(booksResponse);
+        const subscriptionResponse = await fetch(`${BASE_URL}/subscribes/reader/${currentUserId}`,{
+          method: 'GET',
+          headers: headers,
+        });
+        const booksResponse = await fetch(`${BASE_URL}/purchasedBooks/history/${currentUserId}`,{
+          method: 'GET',
+          headers: headers,
+        });
+        console.log(booksResponse);
 
         const userData = await userResponse.json();
-        // const pointData = {totalPoint:1}; //pointData를 받아오지 못하는 상태라서 임의로 값을 부여해둠(오류가 생김)
         const pointData = await pointResponse.json();
-        // const subscriptionData = await subscriptionResponse.json();
-        // const booksData = await booksResponse.json();
+        const subscriptionData = await subscriptionResponse.json();
+        const booksData = await booksResponse.json();
+        console.log(booksData);
+        const bookInfoPromises = booksData?.map(async (book) => {
+          const bookinfo = await fetch(`${BASE_URL}/books/${book.bookId}`,{
+            method: 'GET',
+            headers: headers,
+          });
+          // console.log(await bookinfo.json());
+          const addinfo = await bookinfo.json();
+          console.log(addinfo);
+          setPurchasedBooks(purchasedBooks => [...purchasedBooks, addinfo]);
+        });
+        console.log(purchasedBooks);
 
         setUserInfo(userData);
         setUserInfo(prev => ({
@@ -79,7 +88,7 @@ const ReaderMyPage = () => {
           points: pointData.totalPoint // DB 기준 최신 포인트 반영
         }));
         // setPointInfo(pointData);
-        // setSubscriptionInfo(subscriptionData);
+        setSubscriptionInfo(subscriptionData);
         // setPurchasedBooks(booksData);
 
       } catch (err) {
@@ -122,10 +131,10 @@ const ReaderMyPage = () => {
 
   const handlePointCharge = async (amount) => {
     try {
-      const response = await apiCall(`/points/${userInfo.id}`, {
+      const response = await apiCall(`/points/${userId}`, {
         method: 'PATCH',
         body: JSON.stringify({
-          readerId: userInfo.id,
+          readerId: userId,
           point: amount,
           cost: amount,
           impUid: 'test_12345' // 추후 실제 impUid로  -> 하지만 이번엔 안써
@@ -153,21 +162,40 @@ const ReaderMyPage = () => {
     }
   };
 
-  const handleSubscriptionPurchase = () => {
+  const handleSubscriptionPurchase = async () => {
+    console.log(userId);
+    
     if (userInfo?.points >= 9900) {
       setUserInfo(prev => ({
         ...prev,
         points: prev.points - 9900,
         subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       }));
-      setShowSubscriptionModal(false);
-      alert('월 구독권이 구매되었습니다!');
+      const response = await apiCall(`/subscribes`,{
+        method: 'POST',
+        body: JSON.stringify({
+          readerId: userId,
+        })
+      });
+      console.log(response);
+      if (response.ok) {
+        setShowSubscriptionModal(false);
+        alert('월 구독권이 구매되었습니다!');
+        const subscriptionResponse = await fetch(`${BASE_URL}/subscribes/reader/${userId}`,{
+            method: 'GET',
+        });
+        setSubscriptionInfo(subscriptionResponse.json);
+      } else {
+        const errorText = await response.text();
+        console.error('구매 실패:', errorText);
+        alert('구독권 구매에 실패했습니다.');
+      }
     } else {
       alert('포인트가 부족합니다. 포인트를 충전해주세요.');
     }
   };
 
-  const isSubscriptionActive = subscriptionInfo && new Date(subscriptionInfo.endDate) > new Date();
+  const isSubscriptionActive = subscriptionInfo && new Date(subscriptionInfo.subscribeEndDate) > new Date();
 
   return (
     <div style={{
@@ -327,7 +355,7 @@ const ReaderMyPage = () => {
                     fontSize: '0.9rem',
                     color: isSubscriptionActive ? '#28a745' : '#dc3545'
                   }}>
-                    {isSubscriptionActive ? `${userInfo?.subscriptionEndDate}까지` : '미구독'}
+                    {isSubscriptionActive ? `${subscriptionInfo?.subscribeEndDate}까지` : '미구독'}
                   </span>
                 </div>
                 <button
@@ -391,9 +419,6 @@ const ReaderMyPage = () => {
                         <p style={{ color: '#666', marginBottom: '0.3rem' }}>
                           저자: {book.author}
                         </p>
-                        <p style={{ color: '#999', fontSize: '0.8rem' }}>
-                          구매일: {new Date(book.purchaseDate).toLocaleDateString()}
-                        </p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{
@@ -427,7 +452,7 @@ const ReaderMyPage = () => {
                   <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📚</div>
                   <p>아직 구매한 도서가 없습니다.</p>
                   <button
-                    onClick={() => navigate('/books')}
+                    onClick={() => navigate('/bookListPage')}
                     style={{
                       marginTop: '1rem',
                       padding: '0.8rem 1.5rem',

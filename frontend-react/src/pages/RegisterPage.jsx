@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const AUTHOR_API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -113,11 +114,11 @@ const RegisterPage = () => {
       return;
     }
 
-    let endpoint = '';
+    let endpoint = ``;
     let body = {};
 
     if (userType === 'READER') {
-      endpoint = '/managerReaders';
+      endpoint = `${BASE_URL}/managerReaders`;
       body = JSON.stringify({
         name: formData.name,
         email: formData.email,
