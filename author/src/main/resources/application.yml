@@ -48,6 +48,13 @@ logging:
     org.hibernate.type: trace
     org.springframework.cloud: debug
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+
 ---
 
 spring:
@@ -81,3 +88,8 @@ spring:
           contentType: application/json
 
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

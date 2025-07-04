@@ -45,6 +45,11 @@ logging:
     org.hibernate.type: trace
     org.springframework.cloud: debug
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
 
 server:
   port: 8092
@@ -82,3 +87,8 @@ spring:
           contentType: application/json
 
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

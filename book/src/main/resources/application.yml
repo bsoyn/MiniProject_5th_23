@@ -49,6 +49,12 @@ logging:
 server:
   port: 8091
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
 ---
 
 spring:
@@ -82,3 +88,8 @@ spring:
           contentType: application/json
 
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

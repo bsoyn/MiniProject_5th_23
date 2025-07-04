@@ -49,6 +49,12 @@ api:
   url: 
     purchasebook: localhost:8087 
     
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
 
 server:
   port: 8087
@@ -90,3 +96,8 @@ api:
     purchasebook: purchasebook:8080 
     
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
